@@ -28,6 +28,12 @@ Conventions and decision notes (observed)
 - For static assets, prefer `src/assets` for module imports and `public/` for absolute `/` imports; follow `App.jsx` examples.
 - Tests: There are no test frameworks configured. If adding tests, prefer lightweight tooling (e.g., Vitest) and add scripts to `package.json`.
 
+UI/UX Guidelines (ALWAYS FOLLOW)
+- **Responsivity**: All UI components must work correctly on desktop, tablet, and mobile devices using Tailwind responsive classes (sm:, md:, lg:, xl:)
+- **Dark Mode Support**: Full dark theme support using Tailwind `dark:` prefix classes with proper contrast ratios for accessibility
+- **Mobile-First**: Design for mobile first, then enhance for larger screens
+- **Accessibility**: Ensure text is readable in both light and dark themes with proper color contrast
+
 Integration points & external deps
 - React and React DOM (v19). Plugin: `@vitejs/plugin-react` for HMR/Babel.
 - ESLint with `@eslint/js` and some React plugins — check `eslint.config.js` for specific rules.

@@ -1,0 +1,195 @@
+/* Academy Color System - Global CSS Variables */
+
+:root {
+  /* Primary/Accent Color - Main brand color for buttons, links, focus states */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6; /* Base primary color (blue-500) */
+  --color-primary-600: #2563eb; /* Default button color (blue-600) */
+  --color-primary-700: #1d4ed8; /* Hover states (blue-700) */
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+
+  /* Secondary Color - Supporting brand color for accents, icons */
+  --color-secondary-50: #f0fdfa;
+  --color-secondary-100: #ccfbf1;
+  --color-secondary-200: #99f6e4;
+  --color-secondary-300: #5eead4;
+  --color-secondary-400: #2dd4bf;
+  --color-secondary-500: #14b8a6; /* Base secondary color (teal-500) */
+  --color-secondary-600: #0d9488;
+  --color-secondary-700: #0f766e;
+  --color-secondary-800: #115e59;
+  --color-secondary-900: #134e4a;
+
+  /* Success Color - Green for positive actions */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e; /* Base success color */
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
+
+  /* Warning/Danger Color - Red for destructive actions (logout, delete) */
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444; /* Base danger color */
+  --color-danger-600: #dc2626; /* Default danger button */
+  --color-danger-700: #b91c1c; /* Hover states */
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
+
+  /* Neutral Colors - Grays for text, backgrounds, borders */
+  --color-neutral-50: #f9fafb;
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1f2937;
+  --color-neutral-900: #111827;
+}
+
+/* Dark Mode Color Overrides */
+.dark {
+  /* In dark mode, we might want to adjust some colors for better contrast */
+  --color-primary-400: #818cf8; /* Lighter primary for dark backgrounds */
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+
+  --color-secondary-400: #2dd4bf;
+  --color-secondary-500: #14b8a6;
+  --color-secondary-600: #0d9488;
+}
+
+/* Utility classes for using custom colors */
+.text-primary { color: var(--color-primary-600); }
+.text-primary-light { color: var(--color-primary-400); }
+.text-secondary { color: var(--color-secondary-600); }
+.text-success { color: var(--color-success-600); }
+.text-danger { color: var(--color-danger-600); }
+
+.bg-primary { background-color: var(--color-primary-600); }
+.bg-primary-light { background-color: var(--color-primary-500); }
+.bg-primary-hover { background-color: var(--color-primary-700); }
+.bg-secondary { background-color: var(--color-secondary-600); }
+.bg-success { background-color: var(--color-success-600); }
+.bg-danger { background-color: var(--color-danger-600); }
+.bg-danger-hover { background-color: var(--color-danger-700); }
+
+.border-primary { border-color: var(--color-primary-600); }
+.border-secondary { border-color: var(--color-secondary-600); }
+.border-success { border-color: var(--color-success-600); }
+.border-danger { border-color: var(--color-danger-600); }
+
+/* Focus ring utilities */
+.focus-ring-primary {
+  --tw-ring-color: var(--color-primary-500);
+}
+.focus-ring-secondary {
+  --tw-ring-color: var(--color-secondary-500);
+}
+.focus-ring-danger {
+  --tw-ring-color: var(--color-danger-500);
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-3px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--color-primary-500), 0 0 10px var(--color-primary-500), 0 0 15px var(--color-primary-500);
+  }
+  50% {
+    box-shadow: 0 0 10px var(--color-primary-500), 0 0 20px var(--color-primary-500), 0 0 30px var(--color-primary-500);
+  }
+}
+
+/* Animation Classes */
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.4s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.5s ease-out;
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}

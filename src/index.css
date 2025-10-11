@@ -1,11 +1,15 @@
+/* Import Academy Color System */
+@import './styles/colors.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 }
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* Minimal reset */
 html, #root {

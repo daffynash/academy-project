@@ -1,6 +1,20 @@
 # Project Spec — Academy Manager (σύντομο)
 
-Σκοπός
+## UI/UX Guidelines & Visual Rules
+
+### Οπτικοί Κανόνες (Πάντα να τηρούνται)
+- **Responsivity**: Όλα τα UI components πρέπει να φαίνονται σωστά σε:
+  - Desktop (μεγάλες οθόνες)
+  - Tablet (μεσαίες οθόνες) 
+  - Mobile (μικρές οθόνες)
+- **Dark Mode Support**: Πλήρης υποστήριξη dark theme με:
+  - Κατάλληλα χρώματα που λειτουργούν σε dark backgrounds
+  - Proper contrast ratios για accessibility
+  - Text που είναι ευανάγνωστο σε dark themes
+- **Tailwind Responsive Design**: Χρήση Tailwind responsive classes (sm:, md:, lg:, xl:)
+- **Dark Mode Classes**: Χρήση Tailwind dark: prefix για dark mode styling
+
+## Σκοπός
 - Εφαρμογή για ακαδημίες ποδοσφαίρου για τη διαχείριση παικτών, προπονήσεων και αγώνων.
 - Χρήστες: Administrators (προπονητές, υπεύθυνος ακαδημίας / super-admin) και Parents (γονείς — regular users).
 

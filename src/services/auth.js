@@ -1,5 +1,5 @@
 import { auth } from '../firebase'
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth'
 
 export async function signup(email, password) {
   if (!auth) throw new Error('Firebase not initialized')
@@ -15,5 +15,8 @@ export async function login(email, password) {
 
 export async function logout() {
   if (!auth) throw new Error('Firebase not initialized')
-  await signOut(auth)
+  await firebaseSignOut(auth)
 }
+
+// Export signOut as an alias for logout for compatibility
+export const signOut = logout
