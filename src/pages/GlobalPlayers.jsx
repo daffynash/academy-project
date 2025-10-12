@@ -351,7 +351,7 @@ export default function GlobalPlayers() {
                           {player.name}
                           {player.mainTeamId && (
                             <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
-                              Κύρια: {teams.find(t => t.id === player.mainTeamId)?.name || player.mainTeamId}
+                              {teams.find(t => t.id === player.mainTeamId)?.name || player.mainTeamId}
                             </span>
                           )}
                         </h3>
