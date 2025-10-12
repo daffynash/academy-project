@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getAllUsers } from '../services/db'
 
 export default function CreatePlayerModal({ 
@@ -9,7 +9,8 @@ export default function CreatePlayerModal({
   teams = [], // Available teams for global mode
   isGlobalMode = false, // Whether this is global player creation
   userRole = 'coach', // User role for conditional rendering
-  userId 
+  userId,
+  playerData = null // Optional: existing player data for editing
 }) {
   const [playerName, setPlayerName] = useState('')
   const [playerSurname, setPlayerSurname] = useState('')
@@ -45,6 +46,42 @@ export default function CreatePlayerModal({
       loadUsers()
     }
   }, [isOpen, userId, userRole])
+
+  const resetForm = useCallback(() => {
+    setPlayerName('')
+    setPlayerSurname('')
+    setDateOfBirth('')
+    setPosition('')
+    setJerseyNumber('')
+    setParentName('')
+    setParentEmail('')
+    setAssignToUser(userRole === 'parent')
+    setSelectedUserId(userRole === 'parent' ? userId : '')
+    setSelectedTeams(teamId ? [teamId] : [])
+    setMainTeamId(teamId || '')
+    setError('')
+  }, [userRole, userId, teamId])
+
+  // Populate form when editing existing player
+  useEffect(() => {
+    if (playerData && isOpen) {
+      const nameParts = playerData.name.split(' ')
+      setPlayerName(nameParts[0] || '')
+      setPlayerSurname(nameParts.slice(1).join(' ') || '')
+      setDateOfBirth(playerData.dateOfBirth || '')
+      setPosition(playerData.position || '')
+      setJerseyNumber(playerData.jersey_number?.toString() || '')
+      setParentName(playerData.parentName || '')
+      setParentEmail(playerData.parentEmail || '')
+      setAssignToUser(!!playerData.userId)
+      setSelectedUserId(playerData.userId || '')
+      setSelectedTeams(playerData.teamIds || (teamId ? [teamId] : []))
+      setMainTeamId(playerData.mainTeamId || teamId || '')
+    } else if (!playerData && isOpen) {
+      // Reset form for create mode
+      resetForm()
+    }
+  }, [playerData, isOpen, teamId, resetForm])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -106,26 +143,11 @@ export default function CreatePlayerModal({
       onClose()
       
     } catch (error) {
-      console.error('Error creating player:', error)
-      setError('Αποτυχία δημιουργίας παίκτη. Παρακαλώ δοκιμάστε ξανά.')
+      console.error('Error saving player:', error)
+      setError(playerData ? 'Αποτυχία ενημέρωσης παίκτη. Παρακαλώ δοκιμάστε ξανά.' : 'Αποτυχία δημιουργίας παίκτη. Παρακαλώ δοκιμάστε ξανά.')
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  const resetForm = () => {
-    setPlayerName('')
-    setPlayerSurname('')
-    setDateOfBirth('')
-    setPosition('')
-    setJerseyNumber('')
-    setParentName('')
-    setParentEmail('')
-    setAssignToUser(userRole === 'parent')
-    setSelectedUserId(userRole === 'parent' ? userId : '')
-    setSelectedTeams(teamId ? [teamId] : [])
-    setMainTeamId(teamId || '')
-    setError('')
   }
 
   const handleClose = () => {
@@ -162,7 +184,10 @@ export default function CreatePlayerModal({
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full p-6 animate-slideDown max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-primary-700 dark:from-white dark:to-primary-300 bg-clip-text text-transparent">
-            {isParentMode ? 'Προσθήκη Παιδιού' : 'Προσθήκη Νέου Παίκτη'}
+            {isParentMode 
+              ? (playerData ? 'Επεξεργασία Παιδιού' : 'Προσθήκη Παιδιού')
+              : (playerData ? 'Επεξεργασία Παίκτη' : 'Προσθήκη Νέου Παίκτη')
+            }
           </h3>
           <button
             onClick={handleClose}
@@ -232,8 +257,8 @@ export default function CreatePlayerModal({
             />
           </div>
 
-          {/* Team Selection for Global Mode */}
-          {isGlobalMode && !isParentMode && teams.length > 0 && (
+          {/* Team Selection for Global Mode or Edit Mode */}
+          {(isGlobalMode || playerData) && !isParentMode && teams.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Ομάδες
@@ -254,8 +279,8 @@ export default function CreatePlayerModal({
             </div>
           )}
 
-          {/* Main Team Selection - only show when multiple teams selected in global mode */}
-          {isGlobalMode && selectedTeams.length > 1 && (
+          {/* Main Team Selection - only show when multiple teams selected */}
+          {(isGlobalMode || playerData) && selectedTeams.length > 1 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Κύρια Ομάδα
@@ -422,7 +447,12 @@ export default function CreatePlayerModal({
               disabled={isSubmitting}
               className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
-              {isSubmitting ? 'Δημιουργία...' : isParentMode ? 'Προσθήκη Παιδιού' : 'Δημιουργία Παίκτη'}
+              {isSubmitting 
+                ? (playerData ? 'Ενημέρωση...' : 'Δημιουργία...') 
+                : playerData 
+                  ? 'Ενημέρωση Παίκτη' 
+                  : (isParentMode ? 'Προσθήκη Παιδιού' : 'Δημιουργία Παίκτη')
+              }
             </button>
           </div>
         </form>
