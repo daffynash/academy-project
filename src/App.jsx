@@ -4,10 +4,13 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
+import Layout from './components/Layout'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import Teams from './pages/Teams'
+import Players from './pages/Players'
+import GlobalPlayers from './pages/GlobalPlayers'
 
 function App() {
   return (
@@ -26,17 +29,37 @@ function App() {
           } />
           <Route path="/" element={
             <ProtectedRoute>
-              <Dashboard />
+              <Layout>
+                <Dashboard />
+              </Layout>
             </ProtectedRoute>
           } />
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              <Dashboard />
+              <Layout>
+                <Dashboard />
+              </Layout>
             </ProtectedRoute>
           } />
           <Route path="/teams" element={
             <ProtectedRoute>
-              <Teams />
+              <Layout>
+                <Teams />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/teams/:teamId/players" element={
+            <ProtectedRoute>
+              <Layout>
+                <Players />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/players" element={
+            <ProtectedRoute>
+              <Layout>
+                <GlobalPlayers />
+              </Layout>
             </ProtectedRoute>
           } />
         </Routes>

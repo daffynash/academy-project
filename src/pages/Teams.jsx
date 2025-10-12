@@ -1,38 +1,67 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getTeamsByCoach, deleteTeam } from '../services/db'
+import { getTeamsByCoach, deleteTeam, getPlayersByTeam, getAllTeams, getTeamsForParent } from '../services/db'
 import useAuth from '../contexts/useAuth'
 import CreateTeamModal from '../components/CreateTeamModal'
 
 export default function Teams() {
   const { user, loading } = useAuth()
   const [teams, setTeams] = useState([])
+  const [teamPlayers, setTeamPlayers] = useState({}) // Store player counts by team
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [teamToDelete, setTeamToDelete] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // Check if user has access to view teams (parents should NOT have access)
+  const hasTeamAccess = user?.role === 'coach' || user?.role === 'superadmin'
+
   useEffect(() => {
     if (!user) return
     
-    const loadTeams = async () => {
+    const loadTeamsAndPlayers = async () => {
       try {
         setIsLoading(true)
-        const userTeams = await getTeamsByCoach(user.uid)
+        
+        // Load teams based on user role
+        let userTeams = []
+        if (user.role === 'superadmin') {
+          userTeams = await getAllTeams()
+        } else if (user.role === 'coach') {
+          userTeams = await getTeamsByCoach(user.uid)
+        } else if (user.role === 'parent') {
+          userTeams = await getTeamsForParent(user.uid)
+        }
+        
         setTeams(userTeams)
+        
+        // Load player counts for each team
+        const playerCounts = {}
+        for (const team of userTeams) {
+          try {
+            const players = await getPlayersByTeam(team.id)
+            playerCounts[team.id] = players.length
+          } catch (error) {
+            console.error(`Error loading players for team ${team.id}:`, error)
+            playerCounts[team.id] = 0
+          }
+        }
+        setTeamPlayers(playerCounts)
       } catch (error) {
         console.error('Error loading teams:', error)
         setTeams([])
+        setTeamPlayers({})
       } finally {
         setIsLoading(false)
       }
     }
 
-    loadTeams()
+    loadTeamsAndPlayers()
   }, [user])
 
   const handleTeamCreated = (newTeam) => {
     setTeams(prevTeams => [...prevTeams, newTeam])
+    setTeamPlayers(prevPlayers => ({ ...prevPlayers, [newTeam.id]: 0 }))
   }
 
   const handleDeleteClick = (team) => {
@@ -70,6 +99,32 @@ export default function Teams() {
     return <div>Please login</div>
   }
 
+  // Check for access permissions
+  if (!hasTeamAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-gray-50 to-blue-100 dark:from-gray-900 dark:via-primary-900/10 dark:to-gray-800 flex items-center justify-center">
+        <div className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+          <div className="h-16 w-16 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 mx-auto mb-4">
+            <svg className="h-8 w-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L5.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Δεν έχετε πρόσβαση</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">Η διαχείριση ομάδων είναι διαθέσιμη μόνο για προπονητές και διαχειριστές.</p>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+          >
+            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Επιστροφή στο Dashboard
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-gray-50 to-blue-100 dark:from-gray-900 dark:via-primary-900/10 dark:to-gray-800 animate-fadeIn">
       {/* Header */}
@@ -95,15 +150,17 @@ export default function Teams() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">Manage your academy teams</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 dark:from-primary-500 dark:to-primary-600 dark:hover:from-primary-600 dark:hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-primary-400 dark:focus:ring-offset-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 animate-slideUp"
-            >
-              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Create Team
-            </button>
+            {hasTeamAccess && (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 dark:from-primary-500 dark:to-primary-600 dark:hover:from-primary-600 dark:hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-primary-400 dark:focus:ring-offset-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 animate-slideUp"
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Create Team
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -142,36 +199,43 @@ export default function Teams() {
                       </svg>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <button className="p-2 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg">
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteClick(team)}
-                        className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      {(user.role === 'coach' || user.role === 'superadmin') && (
+                        <>
+                          <button className="p-2 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteClick(team)}
+                            className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-primary-700 dark:from-white dark:to-primary-300 bg-clip-text text-transparent mb-2">{team.name}</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                      {team.members ? `${team.members.length} members` : '0 members'}
+                      {teamPlayers[team.id] !== undefined ? `${teamPlayers[team.id]} παίκτες` : 'Φόρτωση...'}
                     </p>
                     <div className="flex items-center justify-between">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-secondary-100 to-secondary-200 text-secondary-800 dark:from-secondary-900/30 dark:to-secondary-800/30 dark:text-secondary-300">
                         Team
                       </span>
-                      <button className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 transition-colors duration-200">
-                        View details
+                      <Link 
+                        to={`/teams/${team.id}/players`}
+                        className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 transition-colors duration-200"
+                      >
+                        Διαχείριση Παικτών
                         <svg className="ml-1 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 </div>
