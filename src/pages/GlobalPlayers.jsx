@@ -15,6 +15,8 @@ export default function GlobalPlayers() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterTeam, setFilterTeam] = useState('')
   const [expandedCards, setExpandedCards] = useState(new Set())
+  const [playerToEdit, setPlayerToEdit] = useState(null)
+  const [isUpdatingTeams, setIsUpdatingTeams] = useState(false)
 
   // Role-based access control
   const hasPlayerAccess = user?.role === 'coach' || user?.role === 'superadmin' || user?.role === 'parent'
@@ -44,11 +46,9 @@ export default function GlobalPlayers() {
         
         setPlayers(playerData)
         
-        // Load teams for filtering (only if not parent)
-        if (user.role !== 'parent') {
-          const teamData = await getAllTeams()
-          setTeams(teamData)
-        }
+        // Load teams for all users (needed for team name display)
+        const teamData = await getAllTeams()
+        setTeams(teamData)
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
@@ -114,6 +114,27 @@ export default function GlobalPlayers() {
 
   const handleDeleteCancel = () => {
     setPlayerToDelete(null)
+  }
+
+  const handleUpdateTeams = async (playerId, newTeamIds) => {
+    try {
+      setIsUpdatingTeams(true)
+      const { updatePlayer } = await import('../services/db')
+      await updatePlayer(playerId, { teamIds: newTeamIds })
+      
+      // Update local state
+      setPlayers(prev => prev.map(player => 
+        player.id === playerId 
+          ? { ...player, teamIds: newTeamIds }
+          : player
+      ))
+      
+      setPlayerToEdit(null)
+    } catch (error) {
+      console.error('Error updating player teams:', error)
+    } finally {
+      setIsUpdatingTeams(false)
+    }
   }
 
   // Filter players based on search and team
@@ -315,7 +336,7 @@ export default function GlobalPlayers() {
                           {player.name}
                         </h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {calculateAge(player.dateOfBirth)} ετών • {player.teamIds?.length || 0} ομάδα{(player.teamIds?.length || 0) !== 1 ? 'ες' : ''}
+                          {calculateAge(player.dateOfBirth)} ετών • {player.teamIds?.length || 0} {(player.teamIds?.length || 0) === 1 ? 'ομάδα' : 'ομάδες'}
                         </p>
                       </div>
                       
@@ -417,7 +438,7 @@ export default function GlobalPlayers() {
                               <svg className="h-4 w-4 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                               </svg>
-                              <div>
+                              <div className="flex-1">
                                 <span className="font-medium">Ομάδες:</span>
                                 <div className="mt-1 flex flex-wrap gap-1">
                                   {player.teamIds.map(teamId => {
@@ -430,6 +451,29 @@ export default function GlobalPlayers() {
                                   })}
                                 </div>
                               </div>
+                              {(user.role === 'coach' || user.role === 'superadmin') && (
+                                <button
+                                  onClick={() => setPlayerToEdit(player)}
+                                  className="ml-2 px-2 py-1 text-xs bg-primary-100 hover:bg-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded transition-colors"
+                                >
+                                  Επεξεργασία
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          
+                          {(!player.teamIds || player.teamIds.length === 0) && (user.role === 'coach' || user.role === 'superadmin') && (
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                              <span className="font-medium text-gray-500 dark:text-gray-400">Δεν ανήκει σε ομάδα</span>
+                              <button
+                                onClick={() => setPlayerToEdit(player)}
+                                className="ml-2 px-2 py-1 text-xs bg-primary-100 hover:bg-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded transition-colors"
+                              >
+                                Προσθήκη σε Ομάδα
+                              </button>
                             </div>
                           )}
                         </div>
@@ -512,6 +556,106 @@ export default function GlobalPlayers() {
           </div>
         </div>
       )}
+
+      {/* Team Assignment Modal */}
+      {playerToEdit && (
+        <TeamAssignmentModal
+          player={playerToEdit}
+          teams={teams}
+          onClose={() => setPlayerToEdit(null)}
+          onUpdate={handleUpdateTeams}
+          isLoading={isUpdatingTeams}
+        />
+      )}
+    </div>
+  )
+}
+
+// Team Assignment Modal Component
+function TeamAssignmentModal({ player, teams, onClose, onUpdate, isLoading }) {
+  const [selectedTeams, setSelectedTeams] = useState(player.teamIds || [])
+
+  const handleTeamToggle = (teamId) => {
+    setSelectedTeams(prev => 
+      prev.includes(teamId)
+        ? prev.filter(id => id !== teamId)
+        : [...prev, teamId]
+    )
+  }
+
+  const handleSave = () => {
+    onUpdate(player.id, selectedTeams)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full animate-slideDown">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Επεξεργασία Ομάδων
+            </h3>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Παίκτης: <span className="font-medium text-gray-900 dark:text-white">{player.name}</span>
+            </p>
+          </div>
+
+          <div className="space-y-3 max-h-64 overflow-y-auto">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Επιλέξτε ομάδες:
+            </p>
+            {teams.map(team => (
+              <label key={team.id} className="flex items-center p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={selectedTeams.includes(team.id)}
+                  onChange={() => handleTeamToggle(team.id)}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <span className="ml-3 text-sm text-gray-900 dark:text-white font-medium">{team.name}</span>
+              </label>
+            ))}
+          </div>
+
+          {teams.length === 0 && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+              Δεν υπάρχουν διαθέσιμες ομάδες
+            </p>
+          )}
+
+          <div className="flex space-x-3 mt-6">
+            <button
+              onClick={onClose}
+              disabled={isLoading}
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+            >
+              Ακύρωση
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isLoading}
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 rounded-lg transition-colors flex items-center justify-center"
+            >
+              {isLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                'Αποθήκευση'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
