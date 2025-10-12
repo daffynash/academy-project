@@ -26,7 +26,7 @@ export default function CreateTeamModal({ isOpen, onClose, onTeamCreated, userId
       setError('')
       
       // Create team name by combining age group and group name
-      const teamName = `${ageGroup} ${groupName.trim()}`
+      const teamName = `${ageGroup}-${groupName.trim()}`
       
       const teamData = {
         name: teamName,

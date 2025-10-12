@@ -1,36 +1,43 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getPlayersByTeam, deletePlayer } from '../services/db'
+import { getPlayersByTeam, deletePlayer, getTeamById } from '../services/db'
 import useAuth from '../contexts/useAuth'
 import CreatePlayerModal from '../components/CreatePlayerModal'
+import AssignExistingPlayerModal from '../components/AssignExistingPlayerModal'
 
 export default function Players() {
   const { teamId } = useParams()
   const { user, loading } = useAuth()
   const [players, setPlayers] = useState([])
+  const [team, setTeam] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showAssignForm, setShowAssignForm] = useState(false)
   const [playerToDelete, setPlayerToDelete] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  const loadPlayers = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const [teamPlayers, teamData] = await Promise.all([
+        getPlayersByTeam(teamId),
+        getTeamById(teamId)
+      ])
+      setPlayers(teamPlayers)
+      setTeam(teamData)
+    } catch (error) {
+      console.error('Error loading data:', error)
+      setPlayers([])
+      setTeam(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [teamId])
+
   useEffect(() => {
     if (!user || !teamId) return
-    
-    const loadPlayers = async () => {
-      try {
-        setIsLoading(true)
-        const teamPlayers = await getPlayersByTeam(teamId)
-        setPlayers(teamPlayers)
-      } catch (error) {
-        console.error('Error loading players:', error)
-        setPlayers([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     loadPlayers()
-  }, [user, teamId])
+  }, [user, teamId, loadPlayers])
 
   const handlePlayerCreated = (newPlayer) => {
     setPlayers(prevPlayers => [...prevPlayers, newPlayer])
@@ -106,18 +113,29 @@ export default function Players() {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-primary-700 dark:from-white dark:to-primary-300 bg-clip-text text-transparent">Παίκτες</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Διαχείριση παικτών ομάδας: {teamId}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Διαχείριση παικτών ομάδας: {team?.name || teamId}</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 dark:from-primary-500 dark:to-primary-600 dark:hover:from-primary-600 dark:hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-primary-400 dark:focus:ring-offset-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 animate-slideUp"
-            >
-              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Προσθήκη Παίκτη
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 dark:from-primary-500 dark:to-primary-600 dark:hover:from-primary-600 dark:hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-primary-400 dark:focus:ring-offset-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 animate-slideUp"
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Νέος Παίκτης
+              </button>
+              <button
+                onClick={() => setShowAssignForm(true)}
+                className="inline-flex items-center px-4 py-2 border border-primary-300 dark:border-primary-600 text-sm font-medium rounded-xl text-primary-700 dark:text-primary-300 bg-white dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-primary-400 dark:focus:ring-offset-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 animate-slideUp"
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+                Προσθήκη Υπάρχοντος
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -267,6 +285,14 @@ export default function Players() {
           </div>
         </div>
       )}
+
+      {/* Assign Existing Player Modal */}
+      <AssignExistingPlayerModal
+        isOpen={showAssignForm}
+        onClose={() => setShowAssignForm(false)}
+        teamId={teamId}
+        onPlayerAssigned={loadPlayers}
+      />
     </div>
   )
 }

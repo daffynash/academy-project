@@ -50,25 +50,53 @@
 - User documents stored in `/users/{uid}` with fields: name, email, role, teamIds
 - Protected routes redirect to login if not authenticated
 
-#### 2. Team Management System (100% Complete)
+#### 2. Team Management System (100% Complete - Major Update)
 **Files**: `src/pages/Teams.jsx`, `src/components/CreateTeamModal.jsx`, `src/services/db.js`
 
 **Features**:
-- Complete CRUD operations for teams
-- Role-based access control (coach/superadmin only)
-- Greek language forms and validation
-- Responsive design with mobile optimization
-- Team creation with normalized IDs
+- **Restructured Team Creation**: New two-field approach with structured naming
+- **Age Group Standardization**: Predefined categories (K6-K18, Ανδρική Ομάδα, Unassigned)
+- **Complete CRUD Operations**: Create, Read, Update, Delete with cascade cleanup
+- **Role-based Access Control**: Coach/superadmin permissions with parent read-only access
+- **Greek Language Forms**: Full Greek interface with proper validation
+- **Database Integrity**: Cascade delete operations clean player references
 
-#### 3. Player Management System (100% Complete)
-**Files**: `src/pages/Players.jsx`, `src/components/CreatePlayerModal.jsx`, global header integration
+**Team Creation Logic (Restructured)**:
+- **Ηλικιακό Γκρουπ Field**: Dropdown with standardized age categories
+- **Όνομα Γκρουπ Field**: Text input for team group designation
+- **Automatic Combination**: Creates team names like "K8 Α", "K16 Β"
+- **Normalized IDs**: Database storage as "k8-a", "k16-b" for consistency
+- **Backward Compatibility**: Existing teams continue working normally
+
+**Key Implementation Details**:
+- Teams use normalized names as document IDs with Greek-to-Latin conversion
+- Enhanced deleteTeam() function with cascade player reference cleanup
+- Responsive design with mobile optimization
+- Comprehensive form validation and error handling
+
+#### 3. Player Management System (100% Complete - Major Enhancement)
+**Files**: `src/pages/Players.jsx`, `src/pages/GlobalPlayers.jsx`, `src/components/CreatePlayerModal.jsx`, `src/components/AssignExistingPlayerModal.jsx`
 
 **Features**:
-- Global player creation from header
-- Role-based player creation (different forms for parents vs coaches)
-- Centralized player management page
-- Player filtering and search capabilities
-- Team assignment workflow
+- **Scalable Interface Design**: Compact expandable cards supporting 100+ players
+- **Multi-Team Assignment**: Players can belong to multiple teams simultaneously
+- **Existing Player Assignment**: Add existing players to teams from team management
+- **Global Player Management**: Centralized player overview with team assignment capabilities
+- **Field Consistency**: Unified name/lastname fields across all user roles
+- **Role-Based Creation**: Different forms and permissions for parents vs coaches
+
+**Key Enhancements**:
+- **Compact Card Interface**: Transformed from large grid to scalable list view
+- **Click-to-Expand Details**: Essential info visible, detailed info on demand
+- **Team Assignment Modal**: Multi-select interface with search functionality
+- **Real-Time Updates**: UI updates immediately after player assignments
+- **Database Integrity**: Proper handling of multi-team relationships
+
+**Technical Implementation**:
+- Enhanced player CRUD operations with team relationship management
+- AssignExistingPlayerModal component for team-specific player assignment
+- Improved state management with useCallback hooks for performance
+- Consistent validation and error handling across all player operations
 
 #### 4. Role-Based Access Control System (100% Complete)
 **Files**: Multiple components across application
@@ -435,5 +463,110 @@ If starting a new chat session, provide this context:
 ---
 
 **Last Updated**: October 12, 2025  
-**Current Status**: Role-Based Access Control System Completed  
-**Next Session**: Language System Implementation (EN/GR Toggle)
+**Current Status**: Major System Enhancements Completed - Team Creation Restructure, Player Assignment, Navigation Improvements  
+**Next Session**: Dashboard Optimization and Enhanced Detailed Pages
+
+## 🚀 Latest Updates (October 12, 2025)
+
+### ✅ MAJOR COMPLETED FEATURES
+
+#### 8. Navigation System Enhancements (100% Complete)
+**Files**: `src/components/AppHeader.jsx`, `src/pages/Events.jsx`, `src/App.jsx`
+
+**Features**:
+- **Functional Signout Button**: Restored logout functionality through AuthContext integration
+- **Teams Navigation for Parents**: Re-enabled Teams access for parent role with read-only permissions
+- **Events Navigation Item**: Added Events navigation option for all roles with placeholder page
+- **Role-Appropriate Access**: Each role sees appropriate navigation items and restrictions
+
+**Implementation Details**:
+- SignOut button now properly calls `logout()` from AuthContext
+- Parent users can view teams where they have assigned players (similar to dashboard cards)
+- Events page placeholder created with proper routing and protection
+- Navigation items conditionally rendered based on user role
+
+#### 9. Team Creation Philosophy Restructure (100% Complete)
+**Files**: `src/components/CreateTeamModal.jsx`, `src/services/db.js`
+
+**Major Architectural Change**:
+- **Old System**: Single team name field + optional age group
+- **New System**: Separate "Ηλικιακό Γκρουπ" + "Όνομα Γκρουπ" fields
+
+**New Team Creation Logic**:
+- **Ηλικιακό Γκρουπ Dropdown**: K6, K8, K10, K12, K14, K16, K18, Ανδρική Ομάδα, Unassigned
+- **Όνομα Γκρουπ Field**: Free text for team group name (e.g., "Α", "Β", "Γ")
+- **Automatic Combination**: System combines fields to create names like "K8 Α", "K16 Β"
+- **Document ID Generation**: Normalized IDs like "k8-a", "k16-b" for database storage
+
+**Benefits**:
+- Structured approach to team naming
+- Consistent age group categorization
+- Better organization for large academies
+- Maintains backward compatibility with existing teams
+
+#### 10. Player Management Enhancements (100% Complete)
+**Files**: `src/pages/GlobalPlayers.jsx`, `src/pages/Players.jsx`, `src/components/AssignExistingPlayerModal.jsx`
+
+**Major UI Transformation**:
+- **Compact Expandable Cards**: Replaced large grid cards with scalable list view
+- **Scalability Support**: Interface now supports 100+ players efficiently
+- **Click-to-Expand**: Essential info visible, detailed info on demand
+- **Team Assignment Modal**: Multi-select interface for assigning players to teams
+
+**New Player Assignment Features**:
+- **Existing Player Assignment**: Can assign existing players to teams from team management pages
+- **Multi-Team Support**: Players can belong to multiple teams simultaneously
+- **Real-Time Updates**: UI updates immediately after assignments
+- **Search Functionality**: Quick player search in assignment modal
+
+#### 11. Database Integrity Enhancements (100% Complete)
+**Files**: `src/services/db.js`
+
+**Cascade Delete Operations**:
+- **Team Deletion**: Automatically cleans player references when team is deleted
+- **Data Integrity**: Prevents orphaned team references in player documents
+- **Parallel Processing**: Uses Promise.all for efficient bulk updates
+- **Error Handling**: Proper error management for complex operations
+
+**New Database Functions**:
+- `getTeamById()`: Fetch specific team data for UI display
+- Enhanced `deleteTeam()`: Includes cascade cleanup of player references
+- Improved `updatePlayer()`: Better handling of team assignments
+
+#### 12. Field Consistency and Validation (100% Complete)
+**Files**: `src/components/CreatePlayerModal.jsx`, `src/pages/Dashboard.jsx`
+
+**Player Creation Improvements**:
+- **Unified Field Names**: Consistent name/lastname fields across all user roles
+- **Validation Enhancement**: Both fields required for all user types
+- **Display Consistency**: Player names display uniformly across all pages
+- **Storage Optimization**: Merged duplicate field handling
+
+### 🔧 TECHNICAL IMPROVEMENTS
+
+#### Error Handling and User Experience
+- **Firebase Error Management**: Proper error boundaries and user feedback
+- **Loading States**: Consistent loading indicators across all operations
+- **Validation Messages**: Clear, Greek-language validation feedback
+- **Mobile Optimization**: Enhanced touch interactions and responsive behavior
+
+#### Code Architecture
+- **Component Reusability**: Shared modal components for player assignment
+- **State Management**: Improved state handling with useCallback hooks
+- **Performance**: Parallel data loading for better user experience
+- **Maintainability**: Clear function separation and documentation
+
+### 📱 UI/UX ENHANCEMENTS
+
+#### Responsive Design
+- **Mobile-First Approach**: All new components designed for mobile first
+- **Compact Interfaces**: Efficient use of screen space for scalability
+- **Touch Interactions**: Optimized for mobile touch interactions
+- **Dark Mode**: Full dark theme support for all new components
+
+#### Greek Language Support
+- **Consistent Terminology**: All new UI elements use Greek language
+- **Proper Pluralization**: Fixed plural forms (e.g., "0 ομάδες" not "0 ομάδαες")
+- **User-Friendly Messages**: Clear, contextual messages in Greek
+
+---

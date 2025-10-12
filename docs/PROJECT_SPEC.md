@@ -79,15 +79,3 @@ Edge cases / Σημεία προσοχής
 MVP scope & Priorities
 - Πρώτο deliverable (MVP): Authentication, Team listing, Player CRUD, Event create/list, Parent RSVP flow.
 - Μετά (Phase 2): Notifications (email/push), offline sync (PWA), multi-team coaches, analytics.
-
-Προτεινόμενα αμέσως επόμενα βήματα που μπορώ να κάνω τώρα
-1. Δημιουργώ `docs/PROJECT_SPEC.md` (έγινε).
-2. Scaffold frontend routes + minimal mock API (file `src/mock/api.js`) και basic auth flow.
-3. Implement MVP vertical slice: coach creates event + parent RSVPs (UI + mock persistence).
-
-Αν συμφωνείς, ξεκινάω αμέσως το step 2 (scaffold + mock API) — πες μου αν προτιμάς να χρησιμοποιήσω:
-- Local mock server (Express) ή
-- In-app mock (mock functions + localStorage) ή
-- Firebase Firestore (πιο δοκιμασμένο backend out-of-the-box)
-
-Επίσης πες αν θέλεις TypeScript ή να συνεχίσουμε με JavaScript.

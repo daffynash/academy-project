@@ -1,5 +1,5 @@
 import { db } from '../firebase'
-import { collection, getDocs, query, where, doc, setDoc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore'
+import { collection, getDocs, query, where, doc, setDoc, updateDoc, deleteDoc, addDoc, getDoc } from 'firebase/firestore'
 
 if (!db) {
   console.warn('Firestore not initialized — db functions will throw if called')
@@ -63,9 +63,29 @@ export async function updateTeam(teamId, data) {
 
 export async function deleteTeam(teamId) {
   if (!db) throw new Error('Firestore not initialized')
-  const teamDoc = doc(db, 'teams', teamId)
-  await deleteDoc(teamDoc)
-  return { id: teamId }
+  
+  try {
+    // First, get all players that belong to this team
+    const playersInTeam = await getPlayersByTeam(teamId)
+    
+    // Update each player to remove this teamId from their teamIds array
+    const updatePromises = playersInTeam.map(player => {
+      const updatedTeamIds = player.teamIds.filter(id => id !== teamId)
+      return updatePlayer(player.id, { teamIds: updatedTeamIds })
+    })
+    
+    // Wait for all player updates to complete
+    await Promise.all(updatePromises)
+    
+    // Finally, delete the team document
+    const teamDoc = doc(db, 'teams', teamId)
+    await deleteDoc(teamDoc)
+    
+    return { id: teamId, playersUpdated: playersInTeam.length }
+  } catch (error) {
+    console.error('Error deleting team and updating players:', error)
+    throw error
+  }
 }
 
 export async function getTeamsByCoach(coachId) {
@@ -264,6 +284,26 @@ export async function getAllTeams() {
     id: doc.id,
     ...doc.data()
   }))
+}
+
+/**
+ * Get a specific team by ID
+ * @param {string} teamId - The team ID
+ * @returns {Promise<Object|null>} Team data or null if not found
+ */
+export async function getTeamById(teamId) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const teamRef = doc(db, 'teams', teamId)
+  const teamDoc = await getDoc(teamRef)
+  
+  if (teamDoc.exists()) {
+    return {
+      id: teamDoc.id,
+      ...teamDoc.data()
+    }
+  }
+  return null
 }
 
 /**
