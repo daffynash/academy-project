@@ -3,10 +3,15 @@ import AuthContext from './context'
 import { auth, db } from '../firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
+import { logout as authLogout } from '../services/auth'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  const logout = async () => {
+    await authLogout()
+  }
 
   useEffect(() => {
     if (!auth) {
@@ -44,7 +49,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, logout }}>
       {children}
     </AuthContext.Provider>
   )

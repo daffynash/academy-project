@@ -11,7 +11,7 @@ Note: ο χρήστης προτιμά να επικοινωνούμε στα ε
 - **Theme**: Blue color system with dark mode support
 
 ## Quick Development Commands
-- Dev server: `npm run dev` (HMR enabled)
+- Dev server: `npm run dev -- --host` (HMR enabled, accessible from network)
 - Build: `npm run build` 
 - Lint: `npm run lint`
 

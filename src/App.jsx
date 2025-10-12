@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard'
 import Teams from './pages/Teams'
 import Players from './pages/Players'
 import GlobalPlayers from './pages/GlobalPlayers'
+import Events from './pages/Events'
 
 function App() {
   return (
@@ -59,6 +60,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <GlobalPlayers />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/events" element={
+            <ProtectedRoute>
+              <Layout>
+                <Events />
               </Layout>
             </ProtectedRoute>
           } />

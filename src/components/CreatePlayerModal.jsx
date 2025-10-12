@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { createPlayer, getAllUsers } from '../services/db'
+import { getAllUsers } from '../services/db'
 
 export default function CreatePlayerModal({ 
   isOpen, 
@@ -53,7 +53,7 @@ export default function CreatePlayerModal({
       return
     }
 
-    if (userRole !== 'parent' && !playerSurname.trim()) {
+    if (!playerSurname.trim()) {
       setError('Το επίθετο του παίκτη είναι υποχρεωτικό')
       return
     }
@@ -86,9 +86,8 @@ export default function CreatePlayerModal({
       setError('')
       
       const playerData = {
-        name: playerName.trim(),
-        surname: userRole === 'parent' ? '' : playerSurname.trim(),
-        birthDate: dateOfBirth, // Changed from dateOfBirth to birthDate for consistency
+        name: `${playerName.trim()} ${playerSurname.trim()}`,
+        dateOfBirth: dateOfBirth, // Keep as dateOfBirth for consistency with database
         teamIds: isGlobalMode ? selectedTeams : [teamId].filter(Boolean),
         userId: assignToUser ? selectedUserId : null,
         parentName: assignToUser ? null : parentName.trim(),
@@ -173,7 +172,7 @@ export default function CreatePlayerModal({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className={isParentMode ? 'space-y-4' : 'grid grid-cols-1 sm:grid-cols-2 gap-4'}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {isParentMode ? 'Όνομα Παιδιού *' : 'Όνομα Παίκτη *'}
@@ -189,22 +188,20 @@ export default function CreatePlayerModal({
               />
             </div>
 
-            {!isParentMode && (
-              <div>
-                <label htmlFor="playerSurname" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Επίθετο Παίκτη *
-                </label>
-                <input
-                  id="playerSurname"
-                  type="text"
-                  required={!isParentMode}
-                  value={playerSurname}
-                  onChange={(e) => setPlayerSurname(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300"
-                  placeholder="π.χ. Παπαδόπουλος"
-                />
-              </div>
-            )}
+            <div>
+              <label htmlFor="playerSurname" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {isParentMode ? 'Επίθετο Παιδιού *' : 'Επίθετο Παίκτη *'}
+              </label>
+              <input
+                id="playerSurname"
+                type="text"
+                required
+                value={playerSurname}
+                onChange={(e) => setPlayerSurname(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300"
+                placeholder="π.χ. Παπαδόπουλος"
+              />
+            </div>
           </div>
 
           <div>

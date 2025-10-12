@@ -14,6 +14,7 @@ export default function GlobalPlayers() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterTeam, setFilterTeam] = useState('')
+  const [expandedCards, setExpandedCards] = useState(new Set())
 
   // Role-based access control
   const hasPlayerAccess = user?.role === 'coach' || user?.role === 'superadmin' || user?.role === 'parent'
@@ -117,8 +118,7 @@ export default function GlobalPlayers() {
 
   // Filter players based on search and team
   const filteredPlayers = players.filter(player => {
-    const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         player.surname.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesTeam = !filterTeam || player.teamIds?.includes(filterTeam)
     return matchesSearch && matchesTeam
   })
@@ -132,6 +132,18 @@ export default function GlobalPlayers() {
       age--
     }
     return age
+  }
+
+  const toggleCardExpansion = (playerId) => {
+    setExpandedCards(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(playerId)) {
+        newSet.delete(playerId)
+      } else {
+        newSet.add(playerId)
+      }
+      return newSet
+    })
   }
 
   if (loading || isLoading) {
@@ -279,68 +291,165 @@ export default function GlobalPlayers() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-slideUp">
-            {filteredPlayers.map((player) => (
-              <div key={player.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {player.name} {player.surname}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {calculateAge(player.birthDate)} ετών
-                      </p>
+          <div className="space-y-2 animate-slideUp">
+            {filteredPlayers.map((player) => {
+              const isExpanded = expandedCards.has(player.id)
+              return (
+                <div key={player.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
+                  {/* Compact Row */}
+                  <div 
+                    className="p-4 cursor-pointer flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    onClick={() => toggleCardExpansion(player.id)}
+                  >
+                    <div className="flex items-center space-x-4 flex-1">
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                          <span className="text-primary-600 dark:text-primary-400 font-semibold text-sm">
+                            {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                          {player.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {calculateAge(player.dateOfBirth)} ετών • {player.teamIds?.length || 0} ομάδα{(player.teamIds?.length || 0) !== 1 ? 'ες' : ''}
+                        </p>
+                      </div>
+                      
+                      {player.userId && (
+                        <div className="flex-shrink-0">
+                          <div className="w-2 h-2 bg-green-500 rounded-full" title="Συνδεδεμένος με λογαριασμό"></div>
+                        </div>
+                      )}
                     </div>
                     
-                    {/* Delete button - Role-based visibility */}
-                    {(user.role === 'coach' || user.role === 'superadmin') && (
-                      <button
-                        onClick={() => setPlayerToDelete(player)}
-                        className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <div className="flex items-center space-x-2">
+                      {/* Delete button - Role-based visibility */}
+                      {(user.role === 'coach' || user.role === 'superadmin') && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setPlayerToDelete(player)
+                          }}
+                          className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
+                      
+                      {/* Expand/Collapse button */}
+                      <button className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg 
+                          className={`h-4 w-4 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                    )}
-                  </div>
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center text-gray-600 dark:text-gray-400">
-                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {new Date(player.birthDate).toLocaleDateString('el-GR')}
                     </div>
-                    
-                    {player.parentName && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
-                        <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        {player.parentName}
-                      </div>
-                    )}
-
-                    {player.teamIds && player.teamIds.length > 0 && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
-                        <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        {player.teamIds.length} ομάδα{player.teamIds.length > 1 ? 'ες' : ''}
-                      </div>
-                    )}
                   </div>
-
-                  {player.userId && (
-                    <div className="mt-4 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 text-xs rounded-full inline-block">
-                      Συνδεδεμένος με λογαριασμό
+                  
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span className="font-medium">Γέννηση:</span>
+                            <span className="ml-1">{new Date(player.dateOfBirth).toLocaleDateString('el-GR')}</span>
+                          </div>
+                          
+                          {player.position && (
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <span className="font-medium">Θέση:</span>
+                              <span className="ml-1">{player.position}</span>
+                            </div>
+                          )}
+                          
+                          {player.jersey_number && (
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                              </svg>
+                              <span className="font-medium">Φανέλα:</span>
+                              <span className="ml-1">#{player.jersey_number}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {player.parentName && (
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              <span className="font-medium">Γονέας:</span>
+                              <span className="ml-1">{player.parentName}</span>
+                            </div>
+                          )}
+                          
+                          {player.parentEmail && (
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 7.89a2 2 0 002.828 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              <span className="font-medium">Email:</span>
+                              <span className="ml-1">{player.parentEmail}</span>
+                            </div>
+                          )}
+                          
+                          {player.teamIds && player.teamIds.length > 0 && (
+                            <div className="flex items-start text-sm text-gray-600 dark:text-gray-400">
+                              <svg className="h-4 w-4 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                              <div>
+                                <span className="font-medium">Ομάδες:</span>
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  {player.teamIds.map(teamId => {
+                                    const team = teams.find(t => t.id === teamId)
+                                    return (
+                                      <span key={teamId} className="inline-block px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs rounded-full">
+                                        {team?.name || teamId}
+                                      </span>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {player.userId && (
+                        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
+                          <div className="inline-flex items-center px-2.5 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 text-xs rounded-full">
+                            <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            Συνδεδεμένος με λογαριασμό
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </main>
@@ -354,6 +463,7 @@ export default function GlobalPlayers() {
           teams={teams}
           isGlobalMode={true}
           userRole={user.role}
+          userId={user.uid}
         />
       )}
 
@@ -375,7 +485,7 @@ export default function GlobalPlayers() {
               </div>
               
               <p className="text-gray-700 dark:text-gray-300 mb-6">
-                Είστε σίγουροι ότι θέλετε να διαγράψετε τον παίκτη <strong>{playerToDelete.name} {playerToDelete.surname}</strong>;
+                Είστε σίγουροι ότι θέλετε να διαγράψετε τον παίκτη <strong>{playerToDelete.name}</strong>;
               </p>
               
               <div className="flex space-x-3">

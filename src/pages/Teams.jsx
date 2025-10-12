@@ -99,32 +99,6 @@ export default function Teams() {
     return <div>Please login</div>
   }
 
-  // Check for access permissions
-  if (!hasTeamAccess) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-gray-50 to-blue-100 dark:from-gray-900 dark:via-primary-900/10 dark:to-gray-800 flex items-center justify-center">
-        <div className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
-          <div className="h-16 w-16 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 mx-auto mb-4">
-            <svg className="h-8 w-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L5.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Δεν έχετε πρόσβαση</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">Η διαχείριση ομάδων είναι διαθέσιμη μόνο για προπονητές και διαχειριστές.</p>
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-          >
-            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Επιστροφή στο Dashboard
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-gray-50 to-blue-100 dark:from-gray-900 dark:via-primary-900/10 dark:to-gray-800 animate-fadeIn">
       {/* Header */}
@@ -147,7 +121,9 @@ export default function Teams() {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-primary-700 dark:from-white dark:to-primary-300 bg-clip-text text-transparent">Teams</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Manage your academy teams</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {user?.role === 'parent' ? 'Οι ομάδες των παιδιών σας' : 'Manage your academy teams'}
+                </p>
               </div>
             </div>
             {hasTeamAccess && (
@@ -176,17 +152,26 @@ export default function Teams() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No teams found</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">Get started by creating your first team.</p>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-              >
-                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Create Your First Team
-              </button>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                {user?.role === 'parent' ? 'Δεν βρέθηκαν ομάδες' : 'No teams found'}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                {user?.role === 'parent' 
+                  ? 'Δεν έχετε παιδιά εγγεγραμμένα σε ομάδες ακόμα.' 
+                  : 'Get started by creating your first team.'
+                }
+              </p>
+              {hasTeamAccess && (
+                <button
+                  onClick={() => setShowCreateForm(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                >
+                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Create Your First Team
+                </button>
+              )}
             </div>
           ) : (
             teams.map(team => (
@@ -231,7 +216,7 @@ export default function Teams() {
                         to={`/teams/${team.id}/players`}
                         className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 transition-colors duration-200"
                       >
-                        Διαχείριση Παικτών
+                        {user?.role === 'parent' ? 'Προβολή Παικτών' : 'Διαχείριση Παικτών'}
                         <svg className="ml-1 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
