@@ -116,16 +116,31 @@ export default function GlobalPlayers() {
     setPlayerToDelete(null)
   }
 
-  const handleUpdateTeams = async (playerId, newTeamIds) => {
+  const handleUpdateTeams = async (playerId, newTeamIds, mainTeamId = null) => {
     try {
       setIsUpdatingTeams(true)
       const { updatePlayer } = await import('../services/db')
-      await updatePlayer(playerId, { teamIds: newTeamIds })
+      
+      // Prepare update data
+      const updateData = { teamIds: newTeamIds }
+      
+      // Add mainTeamId if provided and valid
+      if (mainTeamId && newTeamIds.includes(mainTeamId)) {
+        updateData.mainTeamId = mainTeamId
+      } else if (newTeamIds.length > 0) {
+        // If no valid mainTeamId provided, use first team as main
+        updateData.mainTeamId = newTeamIds[0]
+      } else {
+        // If no teams, clear main team
+        updateData.mainTeamId = null
+      }
+      
+      await updatePlayer(playerId, updateData)
       
       // Update local state
       setPlayers(prev => prev.map(player => 
         player.id === playerId 
-          ? { ...player, teamIds: newTeamIds }
+          ? { ...player, teamIds: newTeamIds, mainTeamId: updateData.mainTeamId }
           : player
       ))
       
@@ -334,6 +349,11 @@ export default function GlobalPlayers() {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                           {player.name}
+                          {player.mainTeamId && (
+                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
+                              Κύρια: {teams.find(t => t.id === player.mainTeamId)?.name || player.mainTeamId}
+                            </span>
+                          )}
                         </h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {calculateAge(player.dateOfBirth)} ετών • {player.teamIds?.length || 0} {(player.teamIds?.length || 0) === 1 ? 'ομάδα' : 'ομάδες'}
@@ -574,17 +594,29 @@ export default function GlobalPlayers() {
 // Team Assignment Modal Component
 function TeamAssignmentModal({ player, teams, onClose, onUpdate, isLoading }) {
   const [selectedTeams, setSelectedTeams] = useState(player.teamIds || [])
+  const [mainTeamId, setMainTeamId] = useState(player.mainTeamId || '')
 
   const handleTeamToggle = (teamId) => {
-    setSelectedTeams(prev => 
-      prev.includes(teamId)
+    setSelectedTeams(prev => {
+      const newTeams = prev.includes(teamId)
         ? prev.filter(id => id !== teamId)
         : [...prev, teamId]
-    )
+      
+      // Update main team selection
+      if (!newTeams.includes(mainTeamId)) {
+        // If current main team was removed, set first team as main
+        setMainTeamId(newTeams.length > 0 ? newTeams[0] : '')
+      } else if (newTeams.length === 1) {
+        // If only one team selected, make it main
+        setMainTeamId(newTeams[0])
+      }
+      
+      return newTeams
+    })
   }
 
   const handleSave = () => {
-    onUpdate(player.id, selectedTeams)
+    onUpdate(player.id, selectedTeams, mainTeamId)
   }
 
   return (
@@ -632,6 +664,33 @@ function TeamAssignmentModal({ player, teams, onClose, onUpdate, isLoading }) {
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
               Δεν υπάρχουν διαθέσιμες ομάδες
             </p>
+          )}
+
+          {/* Main Team Selection - only show when multiple teams selected */}
+          {selectedTeams.length > 1 && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Κύρια Ομάδα
+              </label>
+              <select
+                value={mainTeamId}
+                onChange={(e) => setMainTeamId(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">Επιλέξτε κύρια ομάδα</option>
+                {selectedTeams.map(teamId => {
+                  const team = teams.find(t => t.id === teamId)
+                  return (
+                    <option key={teamId} value={teamId}>
+                      {team?.name || teamId}
+                    </option>
+                  )
+                })}
+              </select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Η κύρια ομάδα θα εμφανίζεται περισσότερο εμφατικά
+              </p>
+            </div>
           )}
 
           <div className="flex space-x-3 mt-6">

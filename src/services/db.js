@@ -142,6 +142,7 @@ export async function createPlayer(data) {
     name: data.name,
     dateOfBirth: data.dateOfBirth,
     teamIds: data.teamIds || [],
+    mainTeamId: data.mainTeamId || (data.teamIds && data.teamIds.length > 0 ? data.teamIds[0] : null),
     userId: data.userId || null,
     parentName: data.parentName || null,
     parentEmail: data.parentEmail || null,
@@ -164,6 +165,11 @@ export async function createPlayer(data) {
 export async function updatePlayer(playerId, data) {
   if (!db) throw new Error('Firestore not initialized')
   
+  // Validate mainTeamId if provided
+  if (data.mainTeamId && data.teamIds && !data.teamIds.includes(data.mainTeamId)) {
+    throw new Error('Main team must be one of the assigned teams')
+  }
+  
   const playerDoc = doc(db, 'players', playerId)
   const updateData = {
     ...data,
@@ -172,6 +178,29 @@ export async function updatePlayer(playerId, data) {
   
   await updateDoc(playerDoc, updateData)
   return { id: playerId, ...updateData }
+}
+
+/**
+ * Update player's main team
+ * @param {string} playerId - Player document ID
+ * @param {string} mainTeamId - Main team ID
+ */
+export async function updatePlayerMainTeam(playerId, mainTeamId) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  // First get player to validate mainTeamId is in teamIds
+  const player = await getPlayer(playerId)
+  if (!player.teamIds || !player.teamIds.includes(mainTeamId)) {
+    throw new Error('Main team must be one of the assigned teams')
+  }
+  
+  const playerDoc = doc(db, 'players', playerId)
+  await updateDoc(playerDoc, {
+    mainTeamId,
+    updatedAt: new Date().toISOString()
+  })
+  
+  return { id: playerId, mainTeamId }
 }
 
 /**
@@ -184,6 +213,23 @@ export async function deletePlayer(playerId) {
   const playerDoc = doc(db, 'players', playerId)
   await deleteDoc(playerDoc)
   return { id: playerId }
+}
+
+/**
+ * Get a single player by ID
+ * @param {string} playerId - Player document ID
+ */
+export async function getPlayer(playerId) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const playerDoc = doc(db, 'players', playerId)
+  const docSnap = await getDoc(playerDoc)
+  
+  if (!docSnap.exists()) {
+    throw new Error('Player not found')
+  }
+  
+  return { id: playerId, ...docSnap.data() }
 }
 
 /**

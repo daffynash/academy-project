@@ -21,6 +21,7 @@ export default function CreatePlayerModal({
   const [assignToUser, setAssignToUser] = useState(userRole === 'parent') // Auto-assign for parents
   const [selectedUserId, setSelectedUserId] = useState(userRole === 'parent' ? userId : '')
   const [selectedTeams, setSelectedTeams] = useState(teamId ? [teamId] : [])
+  const [mainTeamId, setMainTeamId] = useState('')
   const [availableUsers, setAvailableUsers] = useState([])
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -89,6 +90,7 @@ export default function CreatePlayerModal({
         name: `${playerName.trim()} ${playerSurname.trim()}`,
         dateOfBirth: dateOfBirth, // Keep as dateOfBirth for consistency with database
         teamIds: isGlobalMode ? selectedTeams : [teamId].filter(Boolean),
+        mainTeamId: isGlobalMode ? (mainTeamId || selectedTeams[0] || null) : teamId,
         userId: assignToUser ? selectedUserId : null,
         parentName: assignToUser ? null : parentName.trim(),
         parentEmail: assignToUser ? null : parentEmail.trim(),
@@ -122,6 +124,7 @@ export default function CreatePlayerModal({
     setAssignToUser(userRole === 'parent')
     setSelectedUserId(userRole === 'parent' ? userId : '')
     setSelectedTeams(teamId ? [teamId] : [])
+    setMainTeamId(teamId || '')
     setError('')
   }
 
@@ -131,11 +134,22 @@ export default function CreatePlayerModal({
   }
 
   const handleTeamToggle = (teamIdToToggle) => {
-    setSelectedTeams(prev => 
-      prev.includes(teamIdToToggle)
+    setSelectedTeams(prev => {
+      const newTeams = prev.includes(teamIdToToggle)
         ? prev.filter(id => id !== teamIdToToggle)
         : [...prev, teamIdToToggle]
-    )
+      
+      // Update main team selection
+      if (!newTeams.includes(mainTeamId)) {
+        // If current main team was removed, set first team as main
+        setMainTeamId(newTeams.length > 0 ? newTeams[0] : '')
+      } else if (newTeams.length === 1) {
+        // If only one team selected, make it main
+        setMainTeamId(newTeams[0])
+      }
+      
+      return newTeams
+    })
   }
 
   if (!isOpen) return null
@@ -237,6 +251,33 @@ export default function CreatePlayerModal({
                   </label>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Main Team Selection - only show when multiple teams selected in global mode */}
+          {isGlobalMode && selectedTeams.length > 1 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Κύρια Ομάδα
+              </label>
+              <select
+                value={mainTeamId}
+                onChange={(e) => setMainTeamId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-300"
+              >
+                <option value="">Επιλέξτε κύρια ομάδα</option>
+                {selectedTeams.map(teamId => {
+                  const team = teams.find(t => t.id === teamId)
+                  return (
+                    <option key={teamId} value={teamId}>
+                      {team?.name || teamId}
+                    </option>
+                  )
+                })}
+              </select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Η κύρια ομάδα θα εμφανίζεται περισσότερο εμφατικά
+              </p>
             </div>
           )}
 

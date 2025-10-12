@@ -4,6 +4,7 @@ import { getAllPlayers, updatePlayer } from '../services/db'
 export default function AssignExistingPlayerModal({ isOpen, onClose, teamId, onPlayerAssigned }) {
   const [availablePlayers, setAvailablePlayers] = useState([])
   const [selectedPlayerIds, setSelectedPlayerIds] = useState([])
+  const [mainTeamSelections, setMainTeamSelections] = useState({}) // Track which players should have this as main team
   const [isLoading, setIsLoading] = useState(false)
   const [isAssigning, setIsAssigning] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -31,11 +32,22 @@ export default function AssignExistingPlayerModal({ isOpen, onClose, teamId, onP
   }, [isOpen, teamId, loadAvailablePlayers])
 
   const handlePlayerToggle = (playerId) => {
-    setSelectedPlayerIds(prev => 
-      prev.includes(playerId) 
+    setSelectedPlayerIds(prev => {
+      const newSelection = prev.includes(playerId)
         ? prev.filter(id => id !== playerId)
         : [...prev, playerId]
-    )
+      
+      // Clear main team selection if player is deselected
+      if (!newSelection.includes(playerId)) {
+        setMainTeamSelections(prev => {
+          const updated = { ...prev }
+          delete updated[playerId]
+          return updated
+        })
+      }
+      
+      return newSelection
+    })
   }
 
   const handleAssignPlayers = async () => {
@@ -47,13 +59,27 @@ export default function AssignExistingPlayerModal({ isOpen, onClose, teamId, onP
         selectedPlayerIds.map(playerId => {
           const player = availablePlayers.find(p => p.id === playerId)
           const updatedTeamIds = [...(player.teamIds || []), teamId]
-          return updatePlayer(playerId, { teamIds: updatedTeamIds })
+          const isMainTeam = mainTeamSelections[playerId] === true
+          
+          // Prepare update data
+          const updateData = { teamIds: updatedTeamIds }
+          
+          // Set main team if this should be the main team for this player
+          if (isMainTeam) {
+            updateData.mainTeamId = teamId
+          } else if (!player.mainTeamId && updatedTeamIds.length === 1) {
+            // If player has no main team and this is their first team, make it main
+            updateData.mainTeamId = teamId
+          }
+          
+          return updatePlayer(playerId, updateData)
         })
       )
       
       onPlayerAssigned?.()
       onClose()
       setSelectedPlayerIds([])
+      setMainTeamSelections({})
     } catch (error) {
       console.error('Σφάλμα ανάθεσης παικτών:', error)
     } finally {
@@ -64,6 +90,13 @@ export default function AssignExistingPlayerModal({ isOpen, onClose, teamId, onP
   const filteredPlayers = availablePlayers.filter(player =>
     player.name?.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const handleMainTeamToggle = (playerId) => {
+    setMainTeamSelections(prev => ({
+      ...prev,
+      [playerId]: !prev[playerId]
+    }))
+  }
 
   if (!isOpen) return null
 
@@ -105,15 +138,17 @@ export default function AssignExistingPlayerModal({ isOpen, onClose, teamId, onP
               filteredPlayers.map(player => (
                 <div
                   key={player.id}
-                  onClick={() => handlePlayerToggle(player.id)}
-                  className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 ${
+                  className={`p-3 rounded-xl border transition-all duration-200 ${
                     selectedPlayerIds.includes(player.id)
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-500'
+                      : 'border-gray-200 dark:border-gray-600'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div 
+                      onClick={() => handlePlayerToggle(player.id)}
+                      className="flex-1 cursor-pointer"
+                    >
                       <h3 className="font-medium text-gray-900 dark:text-white">
                         {player.name}
                       </h3>
@@ -123,16 +158,40 @@ export default function AssignExistingPlayerModal({ isOpen, onClose, teamId, onP
                         </p>
                       )}
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedPlayerIds.includes(player.id)
-                        ? 'border-primary-500 bg-primary-500'
-                        : 'border-gray-300 dark:border-gray-600'
-                    }`}>
+                    <div className="flex items-center space-x-3">
+                      {/* Main team checkbox - only show if player is selected */}
                       {selectedPlayerIds.includes(player.id) && (
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={mainTeamSelections[player.id] === true}
+                            onChange={(e) => {
+                              e.stopPropagation()
+                              handleMainTeamToggle(player.id)
+                            }}
+                            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                          />
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            Κύρια ομάδα
+                          </span>
+                        </label>
                       )}
+                      
+                      {/* Selection indicator */}
+                      <div 
+                        onClick={() => handlePlayerToggle(player.id)}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer ${
+                          selectedPlayerIds.includes(player.id)
+                            ? 'border-primary-500 bg-primary-500'
+                            : 'border-gray-300 dark:border-gray-600'
+                        }`}
+                      >
+                        {selectedPlayerIds.includes(player.id) && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
