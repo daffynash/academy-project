@@ -463,8 +463,21 @@ export default function GlobalPlayers() {
                                 <div className="mt-1 flex flex-wrap gap-1">
                                   {player.teamIds.map(teamId => {
                                     const team = teams.find(t => t.id === teamId)
+                                    const isMainTeam = player.mainTeamId === teamId
                                     return (
-                                      <span key={teamId} className="inline-block px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs rounded-full">
+                                      <span 
+                                        key={teamId} 
+                                        className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
+                                          isMainTeam 
+                                            ? 'bg-primary-200 dark:bg-primary-800 text-primary-900 dark:text-primary-100 font-medium' 
+                                            : 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                                        }`}
+                                      >
+                                        {isMainTeam && (
+                                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                                          </svg>
+                                        )}
                                         {team?.name || teamId}
                                       </span>
                                     )
