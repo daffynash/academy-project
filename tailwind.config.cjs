@@ -3,6 +3,55 @@ module.exports = {
   darkMode: 'class', // Enable class-based dark mode
   theme: {
     extend: {
+      animation: {
+        'fadeIn': 'fadeIn 0.5s ease-in-out',
+        'slideDown': 'slideDown 0.3s ease-out',
+        'slideUp': 'slideUp 0.3s ease-out',
+        'slideInLeft': 'slideInLeft 0.4s ease-out',
+        'slideInRight': 'slideInRight 0.4s ease-out',
+        'scaleIn': 'scaleIn 0.3s ease-out',
+        'bounce-soft': 'bounceSoft 1s ease-in-out',
+        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+        'shimmer': 'shimmer 2s linear infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideDown: {
+          '0%': { transform: 'translateY(-20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        slideInLeft: {
+          '0%': { transform: 'translateX(-20px)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        slideInRight: {
+          '0%': { transform: 'translateX(20px)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        scaleIn: {
+          '0%': { transform: 'scale(0.9)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        bounceSoft: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-5px)' },
+        },
+        pulseSoft: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.7' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% center' },
+          '100%': { backgroundPosition: '200% center' },
+        },
+      },
       colors: {
         // Academy custom colors using CSS variables
         primary: {

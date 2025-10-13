@@ -1,12 +1,27 @@
-import { useState } from 'react'
-import { createTeam } from '../services/db'
+import { useState, useEffect } from 'react'
+import { createTeam, updateTeam } from '../services/db'
 
-export default function CreateTeamModal({ isOpen, onClose, onTeamCreated, userId }) {
+export default function CreateTeamModal({ isOpen, onClose, onTeamCreated, userId, teamToEdit = null }) {
   const [ageGroup, setAgeGroup] = useState('')
   const [groupName, setGroupName] = useState('')
   const [description, setDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const isEditMode = !!teamToEdit
+
+  // Populate form when editing
+  useEffect(() => {
+    if (teamToEdit) {
+      setAgeGroup(teamToEdit.ageGroup || '')
+      setGroupName(teamToEdit.groupName || '')
+      setDescription(teamToEdit.description || '')
+    } else {
+      setAgeGroup('')
+      setGroupName('')
+      setDescription('')
+    }
+  }, [teamToEdit])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -33,24 +48,31 @@ export default function CreateTeamModal({ isOpen, onClose, onTeamCreated, userId
         description: description.trim(),
         ageGroup: ageGroup,
         groupName: groupName.trim(),
-        coachIds: [userId],
-        createdBy: userId
       }
-      
-      const newTeam = await createTeam(teamData)
+
+      if (isEditMode) {
+        // Update existing team
+        await updateTeam(teamToEdit.id, teamData)
+        const updatedTeam = { ...teamToEdit, ...teamData }
+        onTeamCreated(updatedTeam)
+      } else {
+        // Create new team
+        teamData.coachIds = [userId]
+        teamData.createdBy = userId
+        const newTeam = await createTeam(teamData)
+        onTeamCreated(newTeam)
+      }
       
       // Reset form
       setAgeGroup('')
       setGroupName('')
       setDescription('')
       
-      // Notify parent component
-      onTeamCreated(newTeam)
       onClose()
       
     } catch (error) {
-      console.error('Error creating team:', error)
-      setError('Αποτυχία δημιουργίας ομάδας. Παρακαλώ δοκιμάστε ξανά.')
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} team:`, error)
+      setError(`Αποτυχία ${isEditMode ? 'ενημέρωσης' : 'δημιουργίας'} ομάδας. Παρακαλώ δοκιμάστε ξανά.`)
     } finally {
       setIsSubmitting(false)
     }
@@ -71,7 +93,7 @@ export default function CreateTeamModal({ isOpen, onClose, onTeamCreated, userId
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 animate-slideDown">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-primary-700 dark:from-white dark:to-primary-300 bg-clip-text text-transparent">
-            Δημιουργία Νέας Ομάδας
+            {isEditMode ? 'Επεξεργασία Ομάδας' : 'Δημιουργία Νέας Ομάδας'}
           </h3>
           <button
             onClick={handleClose}
@@ -104,7 +126,10 @@ export default function CreateTeamModal({ isOpen, onClose, onTeamCreated, userId
               required
               value={ageGroup}
               onChange={(e) => setAgeGroup(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-300"
+              disabled={isEditMode}
+              className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-300 ${
+                isEditMode ? 'opacity-60 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+              }`}
             >
               <option value="">Επιλέξτε ηλικιακό γκρουπ</option>
               <option value="Κ6">Κ6</option>
@@ -117,6 +142,14 @@ export default function CreateTeamModal({ isOpen, onClose, onTeamCreated, userId
               <option value="Ανδρική Ομάδα">Ανδρική Ομάδα</option>
               <option value="Unassigned">Unassigned</option>
             </select>
+            {isEditMode && (
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400 flex items-center">
+                <svg className="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Το ηλικιακό γκρουπ δεν μπορεί να αλλάξει (συνδέεται με το ID της ομάδας)
+              </p>
+            )}
           </div>
 
           <div>
@@ -129,12 +162,27 @@ export default function CreateTeamModal({ isOpen, onClose, onTeamCreated, userId
               required
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300"
+              disabled={isEditMode}
+              className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300 ${
+                isEditMode ? 'opacity-60 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+              }`}
               placeholder="π.χ. Α, Β, Γ"
             />
-            <p className="mt-1 text-xs text-gray-800 dark:text-gray-400">
-              Εισάγετε το όνομα του γκρουπ <span className="italic text-gray-500 dark:text-gray-300">(συνήθως Α, Β, Γ).</span> </p><p className="text-red-500 text-sm underline">Το ηλικιακό γκρουπ θα προστεθεί αυτόματα</p>
-            
+            {isEditMode ? (
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400 flex items-center">
+                <svg className="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Το όνομα γκρουπ δεν μπορεί να αλλάξει (συνδέεται με το ID της ομάδας)
+              </p>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-gray-800 dark:text-gray-400">
+                  Εισάγετε το όνομα του γκρουπ <span className="italic text-gray-500 dark:text-gray-300">(συνήθως Α, Β, Γ).</span>
+                </p>
+                <p className="text-red-500 text-sm underline">Το ηλικιακό γκρουπ θα προστεθεί αυτόματα</p>
+              </>
+            )}
           </div>
 
           <div>
@@ -164,7 +212,10 @@ export default function CreateTeamModal({ isOpen, onClose, onTeamCreated, userId
               disabled={isSubmitting}
               className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
-              {isSubmitting ? 'Δημιουργία...' : 'Δημιουργία Ομάδας'}
+              {isSubmitting 
+                ? (isEditMode ? 'Αποθήκευση...' : 'Δημιουργία...') 
+                : (isEditMode ? 'Αποθήκευση Αλλαγών' : 'Δημιουργία Ομάδας')
+              }
             </button>
           </div>
         </form>
