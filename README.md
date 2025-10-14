@@ -1,30 +1,160 @@
-# React + Vite
+# Academy Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Σύστημα διαχείρισης αθλητικής ακαδημίας - React + Vite + Firebase PWA
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Team Management**: Δημιουργία και διαχείριση ομάδων με structured naming
+- **Player Management**: Comprehensive player system με multi-team support
+- **Authentication**: Firebase Auth με role-based access control
+- **PWA Ready**: Εγκατάσταση σε mobile devices με offline support
+- **Responsive Design**: Mobile-first με dark mode support
+- **Greek Language**: Full Greek UI με Latin normalization για database
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React 19 + Vite 7
+- **Backend**: Firebase (Auth + Firestore)
+- **Styling**: Tailwind CSS 3.4 με custom animations
+- **PWA**: vite-plugin-pwa με Workbox
+- **Routing**: React Router DOM
+- **Language**: JavaScript (ES Modules)
 
-## Expanding the ESLint configuration
+## 📦 Installation
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+# Clone the repository
+git clone [repository-url]
+cd academy-project
 
-## PWA (Progressive Web App)
-
-This template can be extended to a PWA using `vite-plugin-pwa`. After adding the plugin and rebuilding, you can preview the production build to test service worker registration and the generated web manifest.
-
-Typical steps to test PWA locally (PowerShell):
-
-```powershell
+# Install dependencies
 npm install
-npm run build
-npm run preview
+
+# Start development server
+npm run dev -- --host
 ```
 
-Open the preview URL printed by `vite preview` and check DevTools > Application to inspect the service worker and manifest.
+## 🔧 Development
+
+```bash
+# Development server με network access
+npm run dev -- --host
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint code
+npm run lint
+```
+
+## 📱 PWA Setup
+
+Το app είναι configured ως Progressive Web App:
+
+```bash
+# Generate placeholder icons (if needed)
+.\create-icons.ps1
+
+# Convert SVG to PNG icons
+node convert-icons.cjs
+
+# Build με PWA support
+npm run build
+```
+
+Για περισσότερες πληροφορίες, δες το `docs/PWA_SETUP.md`
+
+## 📂 Project Structure
+
+```
+src/
+├── contexts/          # AuthContext με Firestore integration
+├── services/          # Firebase Auth & Firestore operations
+├── pages/            # Main pages (Dashboard, Teams, Players)
+├── components/       # Reusable components & modals
+├── config/           # Color system configuration
+└── styles/           # CSS με custom properties
+
+public/
+├── icons/            # PWA icons (72x72 through 512x512)
+└── manifest.json     # Web App Manifest
+
+docs/
+├── DEVELOPMENT_LOG.md    # Project history
+├── PROJECT_SPEC.md       # Technical specifications
+└── PWA_SETUP.md          # PWA documentation
+```
+
+## 🎨 Theme & Design
+
+- **Primary Color**: Blue (#3b82f6)
+- **Dark Mode**: Full support με proper contrast
+- **Animations**: Custom Tailwind animations (fadeIn, slideIn, shimmer, etc.)
+- **Mobile-First**: Responsive σε όλες τις συσκευές
+
+## 🔥 Firebase Configuration
+
+Create `.env` file:
+
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
+
+## 📖 Documentation
+
+- **Development Log**: `docs/DEVELOPMENT_LOG.md` - Full project history
+- **Project Spec**: `docs/PROJECT_SPEC.md` - Technical specifications
+- **PWA Setup**: `docs/PWA_SETUP.md` - PWA configuration & testing
+- **Copilot Instructions**: `.github/copilot-instructions.md` - AI assistant guidelines
+
+## 🧪 Testing PWA
+
+1. Build το production app: `npm run build`
+2. Serve locally: `npm run preview`
+3. Open σε mobile browser (https required για real device)
+4. Tap "Add to Home Screen"
+5. App ανοίγει σε standalone mode
+
+## 🚧 Current Status
+
+✅ **COMPLETED**:
+- Authentication system με Firebase
+- Team Management (CRUD) με Greek naming
+- Player Management με multi-team support
+- Navigation system με role-based access
+- PWA configuration με offline support
+
+🔄 **IN PROGRESS**:
+- Dashboard optimization
+- Enhanced detail pages
+
+📋 **PLANNED**:
+- Events system
+- Language switcher (EN/GR)
+- Advanced permissions
+- Push notifications
+
+## 📝 Notes
+
+- Greek characters αυτόματα μετατρέπονται για database compatibility
+- Team names δημιουργούνται από Ηλικιακό Γκρουπ + Όνομα Γκρουπ
+- Multi-team player support μέσω `teamIds[]` arrays
+- Mobile-optimized με proper scroll behavior
+- Service Worker caching με smart strategies (Cache-First για images, Network-First για data)
+
+## 📄 License
+
+Private project - All rights reserved
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: January 2025

@@ -8,22 +8,119 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png', 'manifest.webmanifest'],
-      manifest: {
-        name: 'Vite + React',
-        short_name: 'ViteReact',
-        description: 'A minimal Vite + React app',
-        theme_color: '#ffffff',
-        icons: [
+      includeAssets: ['vite.svg', 'icons/*.png'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+        runtimeCaching: [
           {
-            src: '/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
+            urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'firebase-images-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           },
           {
-            src: '/pwa-512x512.png',
+            urlPattern: /^https:\/\/.*\.firebaseio\.com\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'firebase-data-cache',
+              networkTimeoutSeconds: 10,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 5 // 5 minutes
+              }
+            }
+          }
+        ]
+      },
+      manifest: {
+        name: 'Academy Manager',
+        short_name: 'Academy',
+        description: 'Σύστημα διαχείρισης αθλητικής ακαδημίας',
+        theme_color: '#3b82f6',
+        background_color: '#ffffff',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        start_url: '/',
+        scope: '/',
+        icons: [
+          {
+            src: '/icons/icon-72x72.png',
+            sizes: '72x72',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icons/icon-96x96.png',
+            sizes: '96x96',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icons/icon-128x128.png',
+            sizes: '128x128',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icons/icon-144x144.png',
+            sizes: '144x144',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icons/icon-152x152.png',
+            sizes: '152x152',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icons/icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icons/icon-384x384.png',
+            sizes: '384x384',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icons/icon-512x512.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
+        ],
+        shortcuts: [
+          {
+            name: 'Dashboard',
+            short_name: 'Home',
+            description: 'Άνοιγμα αρχικής σελίδας',
+            url: '/dashboard',
+            icons: [{ src: '/icons/icon-96x96.png', sizes: '96x96' }]
+          },
+          {
+            name: 'Teams',
+            short_name: 'Ομάδες',
+            description: 'Διαχείριση ομάδων',
+            url: '/teams',
+            icons: [{ src: '/icons/icon-96x96.png', sizes: '96x96' }]
+          },
+          {
+            name: 'Players',
+            short_name: 'Παίκτες',
+            description: 'Προβολή παικτών',
+            url: '/players',
+            icons: [{ src: '/icons/icon-96x96.png', sizes: '96x96' }]
           }
         ]
       }
