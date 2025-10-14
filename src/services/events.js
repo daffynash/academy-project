@@ -1,0 +1,290 @@
+import { db } from '../firebase'
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  getDoc,
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  where, 
+  orderBy,
+  Timestamp 
+} from 'firebase/firestore'
+
+if (!db) {
+  console.warn('Firestore not initialized — event functions will throw if called')
+}
+
+/**
+ * Event Types:
+ * - training: Προπόνηση
+ * - match: Αγώνας
+ * - event: Εκδήλωση/Event
+ */
+
+/**
+ * Event Schema:
+ * {
+ *   id: string (auto-generated)
+ *   title: string (required)
+ *   description: string
+ *   type: 'training' | 'match' | 'event' (required)
+ *   startDate: Timestamp (required)
+ *   endDate: Timestamp (optional)
+ *   location: string
+ *   teamIds: string[] (array of team IDs)
+ *   participantIds: string[] (array of player IDs)
+ *   status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled'
+ *   createdBy: string (user ID)
+ *   createdAt: Timestamp
+ *   updatedAt: Timestamp
+ *   notes: string (additional notes)
+ *   opponent: string (for matches only)
+ *   score: { home: number, away: number } (for completed matches)
+ * }
+ */
+
+// Create a new event
+export async function createEvent(eventData) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const event = {
+    ...eventData,
+    startDate: Timestamp.fromDate(new Date(eventData.startDate)),
+    endDate: eventData.endDate ? Timestamp.fromDate(new Date(eventData.endDate)) : null,
+    status: eventData.status || 'scheduled',
+    teamIds: eventData.teamIds || [],
+    participantIds: eventData.participantIds || [],
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now()
+  }
+  
+  const eventsCol = collection(db, 'events')
+  const docRef = await addDoc(eventsCol, event)
+  
+  return { id: docRef.id, ...event }
+}
+
+// Get all events
+export async function getAllEvents() {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const eventsCol = collection(db, 'events')
+  const q = query(eventsCol, orderBy('startDate', 'desc'))
+  const snapshot = await getDocs(q)
+  
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    startDate: doc.data().startDate?.toDate(),
+    endDate: doc.data().endDate?.toDate(),
+    createdAt: doc.data().createdAt?.toDate(),
+    updatedAt: doc.data().updatedAt?.toDate()
+  }))
+}
+
+// Get event by ID
+export async function getEventById(eventId) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const eventDoc = doc(db, 'events', eventId)
+  const snapshot = await getDoc(eventDoc)
+  
+  if (!snapshot.exists()) {
+    throw new Error('Event not found')
+  }
+  
+  return {
+    id: snapshot.id,
+    ...snapshot.data(),
+    startDate: snapshot.data().startDate?.toDate(),
+    endDate: snapshot.data().endDate?.toDate(),
+    createdAt: snapshot.data().createdAt?.toDate(),
+    updatedAt: snapshot.data().updatedAt?.toDate()
+  }
+}
+
+// Get events by team
+export async function getEventsByTeam(teamId) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const eventsCol = collection(db, 'events')
+  const q = query(
+    eventsCol,
+    where('teamIds', 'array-contains', teamId),
+    orderBy('startDate', 'desc')
+  )
+  const snapshot = await getDocs(q)
+  
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    startDate: doc.data().startDate?.toDate(),
+    endDate: doc.data().endDate?.toDate(),
+    createdAt: doc.data().createdAt?.toDate(),
+    updatedAt: doc.data().updatedAt?.toDate()
+  }))
+}
+
+// Get events by type
+export async function getEventsByType(eventType) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const eventsCol = collection(db, 'events')
+  const q = query(
+    eventsCol,
+    where('type', '==', eventType),
+    orderBy('startDate', 'desc')
+  )
+  const snapshot = await getDocs(q)
+  
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    startDate: doc.data().startDate?.toDate(),
+    endDate: doc.data().endDate?.toDate(),
+    createdAt: doc.data().createdAt?.toDate(),
+    updatedAt: doc.data().updatedAt?.toDate()
+  }))
+}
+
+// Get events by date range
+export async function getEventsByDateRange(startDate, endDate) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const eventsCol = collection(db, 'events')
+  const q = query(
+    eventsCol,
+    where('startDate', '>=', Timestamp.fromDate(new Date(startDate))),
+    where('startDate', '<=', Timestamp.fromDate(new Date(endDate))),
+    orderBy('startDate', 'asc')
+  )
+  const snapshot = await getDocs(q)
+  
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    startDate: doc.data().startDate?.toDate(),
+    endDate: doc.data().endDate?.toDate(),
+    createdAt: doc.data().createdAt?.toDate(),
+    updatedAt: doc.data().updatedAt?.toDate()
+  }))
+}
+
+// Get upcoming events (future events only)
+export async function getUpcomingEvents(limit = 10) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const eventsCol = collection(db, 'events')
+  const now = Timestamp.now()
+  
+  // Simple query with only one inequality filter to avoid composite index requirement
+  const q = query(
+    eventsCol,
+    where('startDate', '>=', now),
+    orderBy('startDate', 'asc')
+  )
+  const snapshot = await getDocs(q)
+  
+  // Filter out cancelled events client-side
+  const events = snapshot.docs
+    .map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      startDate: doc.data().startDate?.toDate(),
+      endDate: doc.data().endDate?.toDate(),
+      createdAt: doc.data().createdAt?.toDate(),
+      updatedAt: doc.data().updatedAt?.toDate()
+    }))
+    .filter(event => event.status !== 'cancelled')
+  
+  return events.slice(0, limit)
+}
+
+// Update event
+export async function updateEvent(eventId, eventData) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const eventDoc = doc(db, 'events', eventId)
+  
+  const updateData = {
+    ...eventData,
+    updatedAt: Timestamp.now()
+  }
+  
+  // Convert dates to Timestamps if provided
+  if (eventData.startDate) {
+    updateData.startDate = Timestamp.fromDate(new Date(eventData.startDate))
+  }
+  if (eventData.endDate) {
+    updateData.endDate = Timestamp.fromDate(new Date(eventData.endDate))
+  }
+  
+  await updateDoc(eventDoc, updateData)
+  
+  return { id: eventId, ...updateData }
+}
+
+// Delete event
+export async function deleteEvent(eventId) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const eventDoc = doc(db, 'events', eventId)
+  await deleteDoc(eventDoc)
+  
+  return { id: eventId }
+}
+
+// Update event status
+export async function updateEventStatus(eventId, status) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const eventDoc = doc(db, 'events', eventId)
+  await updateDoc(eventDoc, {
+    status,
+    updatedAt: Timestamp.now()
+  })
+  
+  return { id: eventId, status }
+}
+
+// Add participant to event
+export async function addParticipantToEvent(eventId, participantId) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const event = await getEventById(eventId)
+  const updatedParticipants = [...new Set([...event.participantIds, participantId])]
+  
+  await updateEvent(eventId, { participantIds: updatedParticipants })
+  
+  return { id: eventId, participantIds: updatedParticipants }
+}
+
+// Remove participant from event
+export async function removeParticipantFromEvent(eventId, participantId) {
+  if (!db) throw new Error('Firestore not initialized')
+  
+  const event = await getEventById(eventId)
+  const updatedParticipants = event.participantIds.filter(id => id !== participantId)
+  
+  await updateEvent(eventId, { participantIds: updatedParticipants })
+  
+  return { id: eventId, participantIds: updatedParticipants }
+}
+
+// Event type translations
+export const EVENT_TYPES = {
+  training: 'Προπόνηση',
+  match: 'Αγώνας',
+  event: 'Εκδήλωση'
+}
+
+// Event status translations
+export const EVENT_STATUS = {
+  scheduled: 'Προγραμματισμένο',
+  'in-progress': 'Σε Εξέλιξη',
+  completed: 'Ολοκληρωμένο',
+  cancelled: 'Ακυρωμένο'
+}

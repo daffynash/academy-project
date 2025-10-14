@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import './index.css'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
@@ -12,8 +12,39 @@ import Teams from './pages/Teams'
 import Players from './pages/Players'
 import GlobalPlayers from './pages/GlobalPlayers'
 import Events from './pages/Events'
+import OfflinePage from './components/OfflinePage'
 
 function App() {
+  const [isOnline, setIsOnline] = useState(true) // Start optimistically as online
+
+  useEffect(() => {
+    // Check initial online status
+    setIsOnline(navigator.onLine)
+
+    const handleOnline = () => {
+      console.log('Connection restored')
+      setIsOnline(true)
+    }
+
+    const handleOffline = () => {
+      console.log('Connection lost')
+      setIsOnline(false)
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Show offline page if no internet connection
+  if (!isOnline) {
+    return <OfflinePage />
+  }
+
   return (
     <AuthProvider>
       <BrowserRouter>

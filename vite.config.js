@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+﻿import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
@@ -8,38 +8,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['vite.svg', 'icons/*.png'],
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'firebase-images-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/.*\.firebaseio\.com\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'firebase-data-cache',
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutes
-              }
-            }
-          }
-        ]
-      },
+      injectRegister: 'auto',
+      includeAssets: ['vite.svg'],
       manifest: {
         name: 'Academy Manager',
         short_name: 'Academy',
@@ -52,44 +22,8 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
-            src: '/icons/icon-72x72.png',
-            sizes: '72x72',
-            type: 'image/png',
-            purpose: 'any maskable'
-          },
-          {
-            src: '/icons/icon-96x96.png',
-            sizes: '96x96',
-            type: 'image/png',
-            purpose: 'any maskable'
-          },
-          {
-            src: '/icons/icon-128x128.png',
-            sizes: '128x128',
-            type: 'image/png',
-            purpose: 'any maskable'
-          },
-          {
-            src: '/icons/icon-144x144.png',
-            sizes: '144x144',
-            type: 'image/png',
-            purpose: 'any maskable'
-          },
-          {
-            src: '/icons/icon-152x152.png',
-            sizes: '152x152',
-            type: 'image/png',
-            purpose: 'any maskable'
-          },
-          {
             src: '/icons/icon-192x192.png',
             sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any maskable'
-          },
-          {
-            src: '/icons/icon-384x384.png',
-            sizes: '384x384',
             type: 'image/png',
             purpose: 'any maskable'
           },
@@ -99,28 +33,24 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'any maskable'
           }
-        ],
-        shortcuts: [
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        navigateFallback: '/index.html', // Fallback to index.html for offline
+        navigateFallbackDenylist: [/^\/api/], // Don't fallback for API routes
+        runtimeCaching: [
           {
-            name: 'Dashboard',
-            short_name: 'Home',
-            description: 'Άνοιγμα αρχικής σελίδας',
-            url: '/dashboard',
-            icons: [{ src: '/icons/icon-96x96.png', sizes: '96x96' }]
+            urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
+            handler: 'NetworkOnly' // Always require network for Firebase Storage
           },
           {
-            name: 'Teams',
-            short_name: 'Ομάδες',
-            description: 'Διαχείριση ομάδων',
-            url: '/teams',
-            icons: [{ src: '/icons/icon-96x96.png', sizes: '96x96' }]
+            urlPattern: /^https:\/\/.*\.firebaseapp\.com\/.*/i,
+            handler: 'NetworkOnly' // Always require network for Firebase
           },
           {
-            name: 'Players',
-            short_name: 'Παίκτες',
-            description: 'Προβολή παικτών',
-            url: '/players',
-            icons: [{ src: '/icons/icon-96x96.png', sizes: '96x96' }]
+            urlPattern: /^https:\/\/.*\.googleapis\.com\/.*/i,
+            handler: 'NetworkOnly' // Always require network for Google APIs
           }
         ]
       }
