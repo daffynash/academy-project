@@ -3,12 +3,18 @@ import { Link } from 'react-router-dom'
 import { getTeamsByCoach, getPlayersByUser, getTeamsForParent } from '../services/db'
 import { getUpcomingEvents, EVENT_TYPES } from '../services/events'
 import useAuth from '../contexts/useAuth'
+import AttendanceModal from '../components/AttendanceModal'
+import AttendanceViewModal from '../components/AttendanceViewModal'
+import EventCard from '../components/EventCard'
 
 export default function Dashboard() {
   const { user, loading } = useAuth()
   const [teams, setTeams] = useState([])
   const [players, setPlayers] = useState([])
   const [upcomingEvents, setUpcomingEvents] = useState([])
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false)
+  const [showAttendanceViewModal, setShowAttendanceViewModal] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState(null)
 
   useEffect(() => {
     if (!user) return
@@ -20,11 +26,20 @@ export default function Dashboard() {
           const [userPlayers, userTeams, events] = await Promise.all([
             getPlayersByUser(user.uid),
             getTeamsForParent(user.uid),
-            getUpcomingEvents(3)
+            getUpcomingEvents(10) // Load more events to filter
           ])
           setPlayers(userPlayers)
           setTeams(userTeams)
-          setUpcomingEvents(events)
+          
+          // Filter events for parents - only show events where their children are participants
+          const childPlayerIds = userPlayers.map(player => player.id)
+          const filteredEvents = events.filter(event => {
+            const hasParticipatingChild = event.participantIds && 
+              event.participantIds.some(participantId => childPlayerIds.includes(participantId))
+            return hasParticipatingChild
+          }).slice(0, 3) // Take only first 3 after filtering
+          
+          setUpcomingEvents(filteredEvents)
         } else {
           // Load coach/superadmin data (existing logic)
           const [userTeams, events] = await Promise.all([
@@ -45,6 +60,16 @@ export default function Dashboard() {
     
     loadDashboardData()
   }, [user])
+
+  const handleAttendanceClick = (event) => {
+    setSelectedEvent(event)
+    setShowAttendanceModal(true)
+  }
+
+  const handleAttendanceViewClick = (event) => {
+    setSelectedEvent(event)
+    setShowAttendanceViewModal(true)
+  }
 
   if (loading) return <div>Loading...</div>
   if (!user) return <div>Please login</div>
@@ -171,68 +196,48 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {upcomingEvents.map(event => {
-                const eventTypeColor = event.type === 'training' 
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                  : event.type === 'match'
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                  : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-
-                return (
-                  <div
-                    key={event.id}
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 p-5 group"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${eventTypeColor}`}>
-                        {EVENT_TYPES[event.type]}
-                      </span>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
-                        <div className="font-semibold">
-                          {event.startDate.toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}
-                        </div>
-                        <div>
-                          {event.startDate.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                      {event.title}
-                    </h3>
-                    
-                    {event.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                        {event.description}
-                      </p>
-                    )}
-
-                    <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                      {event.location && (
-                        <div className="flex items-center space-x-2">
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <span className="truncate">{event.location}</span>
-                        </div>
-                      )}
-                      {event.teamIds.length > 0 && (
-                        <div className="flex items-center space-x-2">
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          <span>{event.teamIds.length} ομάδ{event.teamIds.length === 1 ? 'α' : 'ες'}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+              {upcomingEvents.map(event => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  teams={teams}
+                  user={user}
+                  onAttendanceClick={handleAttendanceClick}
+                  onAttendanceViewClick={handleAttendanceViewClick}
+                  showDeleteButton={false}
+                  compact={true}
+                />
+              ))}
             </div>
           </div>
         )}
       </main>
+
+      {/* Attendance Modal for Parents */}
+      <AttendanceModal
+        isOpen={showAttendanceModal}
+        onClose={() => {
+          setShowAttendanceModal(false)
+          setSelectedEvent(null)
+        }}
+        event={selectedEvent}
+        userPlayers={players.filter(player => 
+          selectedEvent?.participantIds?.includes(player.id)
+        )}
+        onAttendanceSubmitted={() => {
+          // Could refresh events or show success message
+        }}
+      />
+
+      {/* Attendance View Modal for Coaches/Admins */}
+      <AttendanceViewModal
+        isOpen={showAttendanceViewModal}
+        onClose={() => {
+          setShowAttendanceViewModal(false)
+          setSelectedEvent(null)
+        }}
+        event={selectedEvent}
+      />
     </div>
   )
 }

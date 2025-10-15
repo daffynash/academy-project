@@ -393,3 +393,22 @@ export async function getTeamsForParent(parentUserId) {
   
   return teams
 }
+
+/**
+ * Get multiple players by their IDs
+ * @param {Array<string>} playerIds - Array of player IDs
+ * @returns {Promise<Array>} Array of players
+ */
+export async function getPlayersByIds(playerIds) {
+  if (!db) throw new Error('Firestore not initialized')
+  if (!playerIds || playerIds.length === 0) return []
+
+  const playersCol = collection(db, 'players')
+  const q = query(playersCol, where('__name__', 'in', playerIds.slice(0, 10))) // Firestore 'in' limit is 10
+  const snapshot = await getDocs(q)
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }))
+}

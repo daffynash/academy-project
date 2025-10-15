@@ -7,6 +7,7 @@ import {
   doc, 
   updateDoc, 
   deleteDoc, 
+  deleteField,
   query, 
   where, 
   orderBy,
@@ -43,6 +44,14 @@ if (!db) {
  *   notes: string (additional notes)
  *   opponent: string (for matches only)
  *   score: { home: number, away: number } (for completed matches)
+ *   attendanceDeclarations: {
+ *     [playerId: string]: {
+ *       parentId: string
+ *       status: 'present' | 'absent' | 'maybe'
+ *       timestamp: Timestamp
+ *       notes?: string
+ *     }
+ *   }
  * }
  */
 
@@ -287,4 +296,72 @@ export const EVENT_STATUS = {
   'in-progress': 'Σε Εξέλιξη',
   completed: 'Ολοκληρωμένο',
   cancelled: 'Ακυρωμένο'
+}
+
+// Attendance status translations
+export const ATTENDANCE_STATUS = {
+  present: 'Παρόν',
+  absent: 'Απών',
+  maybe: 'Ίσως'
+}
+
+// Submit attendance declaration for a player
+export async function submitAttendanceDeclaration(eventId, playerId, parentId, status, notes = '') {
+  if (!db) throw new Error('Firestore not initialized')
+
+  const eventDoc = doc(db, 'events', eventId)
+  const declaration = {
+    parentId,
+    status,
+    timestamp: Timestamp.now(),
+    notes: notes.trim()
+  }
+
+  await updateDoc(eventDoc, {
+    [`attendanceDeclarations.${playerId}`]: declaration,
+    updatedAt: Timestamp.now()
+  })
+
+  return { playerId, ...declaration }
+}
+
+// Get attendance declarations for an event
+export async function getAttendanceDeclarations(eventId) {
+  if (!db) throw new Error('Firestore not initialized')
+
+  const event = await getEventById(eventId)
+  return event.attendanceDeclarations || {}
+}
+
+// Update attendance declaration
+export async function updateAttendanceDeclaration(eventId, playerId, status, notes = '') {
+  if (!db) throw new Error('Firestore not initialized')
+
+  const eventDoc = doc(db, 'events', eventId)
+  const updateData = {
+    [`attendanceDeclarations.${playerId}.status`]: status,
+    [`attendanceDeclarations.${playerId}.timestamp`]: Timestamp.now(),
+    updatedAt: Timestamp.now()
+  }
+
+  if (notes !== undefined) {
+    updateData[`attendanceDeclarations.${playerId}.notes`] = notes.trim()
+  }
+
+  await updateDoc(eventDoc, updateData)
+
+  return { playerId, status, notes, timestamp: Timestamp.now() }
+}
+
+// Delete attendance declaration
+export async function deleteAttendanceDeclaration(eventId, playerId) {
+  if (!db) throw new Error('Firestore not initialized')
+
+  const eventDoc = doc(db, 'events', eventId)
+  await updateDoc(eventDoc, {
+    [`attendanceDeclarations.${playerId}`]: deleteField(),
+    updatedAt: Timestamp.now()
+  })
+
+  return { playerId }
 }
