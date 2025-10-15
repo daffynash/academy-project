@@ -6,10 +6,12 @@
 
 - **Team Management**: Δημιουργία και διαχείριση ομάδων με structured naming
 - **Player Management**: Comprehensive player system με multi-team support
+- **Events System**: Διαχείριση προπονήσεων, αγώνων και εκδηλώσεων
 - **Authentication**: Firebase Auth με role-based access control
 - **PWA Ready**: Εγκατάσταση σε mobile devices με offline support
 - **Responsive Design**: Mobile-first με dark mode support
 - **Greek Language**: Full Greek UI με Latin normalization για database
+- **Production Ready**: Deployed στο Firebase Hosting
 
 ## 🛠️ Tech Stack
 
@@ -42,6 +44,9 @@ npm run dev -- --host
 
 # Build for production
 npm run build
+
+# Deploy to Firebase Hosting
+npx firebase deploy --only hosting
 
 # Preview production build
 npm run preview
@@ -97,16 +102,25 @@ docs/
 
 ## 🔥 Firebase Configuration
 
-Create `.env` file:
+Το project είναι configured για Firebase Hosting με project ID: `academy-manager-v114`
+
+**Live URL**: https://academy-manager-v114.web.app
+
+Create `.env` file με τα Firebase credentials:
 
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_PROJECT_ID=academy-manager-v114
 VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
+
+**Deployment Steps**:
+1. `npm run build` - Build για production
+2. `npx firebase deploy --only hosting` - Deploy στο Firebase Hosting
+3. App είναι live στο https://academy-manager-v114.web.app
 
 ## 📖 Documentation
 
@@ -129,18 +143,21 @@ VITE_FIREBASE_APP_ID=your_app_id
 - Authentication system με Firebase
 - Team Management (CRUD) με Greek naming
 - Player Management με multi-team support
+- Events System με attendance tracking
 - Navigation system με role-based access
 - PWA configuration με offline support
+- **Firebase Hosting Deployment** - Live στο https://academy-manager-v114.web.app
+- Dashboard optimization με improved events layout
 
 🔄 **IN PROGRESS**:
-- Dashboard optimization
-- Enhanced detail pages
+- User feedback collection
+- Performance monitoring
 
 📋 **PLANNED**:
-- Events system
-- Language switcher (EN/GR)
-- Advanced permissions
 - Push notifications
+- Advanced analytics
+- Language switcher (EN/GR)
+- Enhanced admin features
 
 ## 📝 Notes
 
@@ -157,4 +174,5 @@ Private project - All rights reserved
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: January 2025
+**Last Updated**: October 15, 2025  
+**Live URL**: https://academy-manager-v114.web.app
