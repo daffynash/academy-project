@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  getTeamsByCoach,
   getPlayersByUser,
-  getTeamsForParent,
+  getAllTeams,
 } from "../services/db";
 import { getUpcomingEvents, EVENT_TYPES } from "../services/events";
 import useAuth from "../contexts/useAuth";
@@ -27,13 +26,13 @@ export default function Dashboard() {
       try {
         if (user.role === "parent") {
           // Load parent-specific data
-          const [userPlayers, userTeams, events] = await Promise.all([
+          const [userPlayers, allTeams, events] = await Promise.all([
             getPlayersByUser(user.uid),
-            getTeamsForParent(user.uid),
+            getAllTeams(), // Load all teams for event display
             getUpcomingEvents(10), // Load more events to filter
           ]);
           setPlayers(userPlayers);
-          setTeams(userTeams);
+          setTeams(allTeams); // Use all teams for event display
 
           // Filter events for parents - only show events where their children are participants
           const childPlayerIds = userPlayers.map((player) => player.id);
@@ -51,11 +50,11 @@ export default function Dashboard() {
           setUpcomingEvents(filteredEvents);
         } else {
           // Load coach/superadmin data (existing logic)
-          const [userTeams, events] = await Promise.all([
-            getTeamsByCoach(user.uid),
+          const [allTeams, events] = await Promise.all([
+            getAllTeams(), // Load all teams for event display
             getUpcomingEvents(3),
           ]);
-          setTeams(userTeams);
+          setTeams(allTeams); // Use all teams for event display
           setPlayers([]); // Coaches don't need global player count on dashboard
           setUpcomingEvents(events);
         }
