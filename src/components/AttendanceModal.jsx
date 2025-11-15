@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { submitAttendanceDeclaration, updateAttendanceDeclaration, getAttendanceDeclarations, ATTENDANCE_STATUS } from '../services/events'
 import useAuth from '../contexts/useAuth'
 
@@ -98,11 +99,13 @@ export default function AttendanceModal({ isOpen, onClose, event, userPlayers, o
 
   if (!isOpen) return null
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn border border-gray-200 dark:border-gray-700">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+  return createPortal(
+    <>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fadeIn pointer-events-auto" onClick={onClose}></div>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] animate-scaleIn border border-gray-200 dark:border-gray-700 pointer-events-auto flex flex-col overflow-hidden">
+        {/* Header - Fixed */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               Δήλωση Παρουσίας
@@ -121,8 +124,8 @@ export default function AttendanceModal({ isOpen, onClose, event, userPlayers, o
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+        {/* Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-6">
           {/* Messages */}
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
@@ -241,8 +244,8 @@ export default function AttendanceModal({ isOpen, onClose, event, userPlayers, o
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+        {/* Footer - Fixed */}
+        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
           <button
             onClick={onClose}
             className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 font-medium transition-colors"
@@ -251,6 +254,8 @@ export default function AttendanceModal({ isOpen, onClose, event, userPlayers, o
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>,
+    document.body
   )
 }

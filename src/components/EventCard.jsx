@@ -101,20 +101,20 @@ export default function EventCard({
         </div>
 
         {/* Event Details - Modern Compact Layout */}
-        <div className={`grid grid-cols-1 sm:grid-cols-3 gap-${compact ? '2' : '3'} mt-4`}>
+        <div className={`grid grid-cols-2 sm:grid-cols-3 gap-${compact ? '2' : '3'} mt-4`}>
           {/* Date & Time - με πιο εμφανή ώρα */}
-          <div className={`flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-${compact ? '2' : '3'} py-${compact ? '1.5' : '2'}`}>
+          <div className={`flex items-center space-x-1.5 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-2 py-2`}>
             <svg className={`h-${compact ? '3.5' : '4'} w-${compact ? '3.5' : '4'} text-primary-600 dark:text-primary-400 flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div className="min-w-0">
-              <div className={`font-medium text-gray-900 dark:text-white ${compact ? 'text-xs' : ''}`}>
-                {event.startDate.toLocaleDateString('el-GR', { weekday: 'long' })}
+              <div className={`font-medium text-gray-900 dark:text-white text-xs`}>
+                {event.startDate.toLocaleDateString('el-GR', { weekday: 'short' })}
               </div>
-              <div className={`${compact ? 'text-xs' : 'text-sm'} font-bold text-primary-600 dark:text-primary-400`}>
+              <div className={`text-xs font-bold text-primary-600 dark:text-primary-400`}>
                 {event.startDate.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit', hour12: false })}
               </div>
-              <div className={`${compact ? 'text-xs' : 'text-xs'} text-gray-500`}>
+              <div className={`text-xs text-gray-500`}>
                 {event.startDate.toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function EventCard({
 
           {/* Location */}
           {event.location && (
-            <div className={`flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-${compact ? '2' : '3'} py-${compact ? '1.5' : '2'}`}>
+            <div className={`hidden sm:flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-${compact ? '2' : '3'} py-${compact ? '1.5' : '2'}`}>
               <svg className={`h-${compact ? '3.5' : '4'} w-${compact ? '3.5' : '4'} text-green-600 dark:text-green-400 flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -132,11 +132,11 @@ export default function EventCard({
           )}
 
           {/* Participants Count */}
-          <div className={`flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-${compact ? '2' : '3'} py-${compact ? '1.5' : '2'}`}>
+          <div className={`flex items-center space-x-1.5 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-2 py-2`}>
             <svg className={`h-${compact ? '3.5' : '4'} w-${compact ? '3.5' : '4'} text-blue-600 dark:text-blue-400 flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <span className={`${compact ? 'text-xs' : ''}`}>{event.participantIds?.length || 0} {event.participantIds?.length === 1 ? 'Παίκτης' : 'Παίκτες'}</span>
+            <span className={`text-xs`}>{event.participantIds?.length || 0} {event.participantIds?.length === 1 ? 'Παίκτης' : 'Παίκτες'}</span>
           </div>
         </div>
 

@@ -17,8 +17,8 @@ export default function AppHeader() {
       path: '/dashboard',
       icon: (
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v4H8V5z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l9 6v9a3 3 0 01-3 3H6a3 3 0 01-3-3v-9l9-6z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12v6h6v-6" />
         </svg>
       ),
       roles: ['coach', 'parent', 'superadmin']
@@ -38,7 +38,7 @@ export default function AppHeader() {
       path: '/players',
       icon: (
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
       roles: ['coach', 'parent', 'superadmin']
@@ -133,19 +133,19 @@ export default function AppHeader() {
 
         {/* Mobile Navigation */}
         <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-2">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex justify-around">
             {availableItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                title={item.name}
+                className={`inline-flex items-center justify-center p-2.5 rounded-lg transition-all duration-200 ${
                   isActivePath(item.path)
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                     : 'text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 {item.icon}
-                <span className="ml-2">{item.name}</span>
               </Link>
             ))}
           </div>

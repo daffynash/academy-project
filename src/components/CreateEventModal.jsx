@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { createEvent, updateEvent, EVENT_TYPES, EVENT_STATUS } from '../services/events'
 import { getAllTeams, getPlayersByTeam } from '../services/db'
 import useAuth from '../contexts/useAuth'
@@ -306,11 +307,13 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, even
 
   if (!isOpen) return null
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden animate-scaleIn border border-gray-200 dark:border-gray-700">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+  return createPortal(
+    <>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fadeIn pointer-events-auto" onClick={onClose}></div>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] animate-scaleIn border border-gray-200 dark:border-gray-700 pointer-events-auto flex flex-col overflow-hidden">
+        {/* Header - Fixed */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {isEditMode ? 'Επεξεργασία Event' : 'Νέο Event'}
@@ -329,8 +332,8 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, even
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+        {/* Form - Scrollable */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
           <div className="space-y-6">
             {/* Error Message */}
             {error && (
@@ -580,34 +583,35 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, even
               </div>
             )}
           </div>
-        </form>
 
-        {/* Footer */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={isLoading}
-            className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 font-medium transition-colors disabled:opacity-50"
-          >
-            Ακύρωση
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium transition-colors disabled:opacity-50 flex items-center space-x-2"
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Αποθήκευση...</span>
-              </>
-            ) : (
-              <span>{isEditMode ? 'Ενημέρωση' : 'Δημιουργία'}</span>
-            )}
-          </button>
-        </div>
+          {/* Footer - Inside Form */}
+          <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 -mx-6 -mb-6 mt-6 p-4 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 font-medium transition-colors"
+            >
+              Ακύρωση
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium transition-colors disabled:opacity-50 flex items-center space-x-2"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Αποθήκευση...</span>
+                </>
+              ) : (
+                <span>{isEditMode ? 'Ενημέρωση' : 'Δημιουργία'}</span>
+              )}
+            </button>
+          </div>
+        </form>
       </div>
-    </div>
+      </div>
+    </>,
+    document.body
   )
 }

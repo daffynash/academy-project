@@ -26,8 +26,9 @@ export default function Events() {
   // Filters
   const [filterType, setFilterType] = useState('all')
   const [filterTeam, setFilterTeam] = useState('all')
-  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('active') // 'active' = scheduled+in-progress by default
   const [searchQuery, setSearchQuery] = useState('')
+  const [displayCount, setDisplayCount] = useState(9) // For pagination
 
   useEffect(() => {
     if (!user) return
@@ -78,7 +79,13 @@ export default function Events() {
     if (filterTeam !== 'all' && !event.teamIds.includes(filterTeam)) return false
     
     // Status filter
-    if (filterStatus !== 'all' && event.status !== filterStatus) return false
+    if (filterStatus === 'active') {
+      // Show only scheduled and in-progress
+      if (!['scheduled', 'in-progress'].includes(event.status)) return false
+    } else if (filterStatus !== 'all') {
+      // Show only selected status
+      if (event.status !== filterStatus) return false
+    }
     
     // Search query
     if (searchQuery && !event.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
@@ -86,19 +93,40 @@ export default function Events() {
     return true
   })
 
-  // Group events by date for list view
-  const groupedEvents = filteredEvents.reduce((groups, event) => {
-    const dateKey = event.startDate.toLocaleDateString('el-GR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+  // Group events by week for list view (only show first 9-10)
+  const paginatedEvents = filteredEvents.slice(0, displayCount)
+  
+  const getWeekStartDate = (date) => {
+    const d = new Date(date)
+    const day = d.getDay() // 0 = Sunday, 1 = Monday, etc.
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Adjust to Monday
+    return new Date(d.setDate(diff))
+  }
+  
+  const formatWeekRange = (startDate) => {
+    const start = getWeekStartDate(startDate)
+    const end = new Date(start)
+    end.setDate(end.getDate() + 6) // Sunday
     
-    if (!groups[dateKey]) {
-      groups[dateKey] = []
+    const startFormatted = start.toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })
+    const endFormatted = end.toLocaleDateString('el-GR', { day: 'numeric', month: 'short', year: 'numeric' })
+    
+    return `${startFormatted} - ${endFormatted}`
+  }
+  
+  const groupedEvents = paginatedEvents.reduce((groups, event) => {
+    const weekStart = getWeekStartDate(event.startDate)
+    const weekKey = weekStart.toISOString().split('T')[0] // Use ISO date as key
+    const weekLabel = formatWeekRange(event.startDate)
+    
+    if (!groups[weekKey]) {
+      groups[weekKey] = {
+        label: weekLabel,
+        events: [],
+        startDate: weekStart
+      }
     }
-    groups[dateKey].push(event)
+    groups[weekKey].events.push(event)
     return groups
   }, {})
 
@@ -256,7 +284,8 @@ export default function Events() {
               onChange={(e) => setFilterStatus(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
             >
-              <option value="all">Όλες</option>
+              <option value="active">Σε εξέλιξη ή Προγραμματισμένα</option>
+              <option value="all">Όλα</option>
               {Object.entries(EVENT_STATUS).map(([key, label]) => (
                 <option key={key} value={key}>{label}</option>
               ))}
@@ -277,19 +306,19 @@ export default function Events() {
           </div>
         ) : (
           <div className="space-y-8">
-            {Object.entries(groupedEvents).map(([date, dateEvents]) => (
-              <div key={date} className="space-y-4">
-                {/* Date Header */}
+            {Object.entries(groupedEvents).map(([weekKey, weekData]) => (
+              <div key={weekKey} className="space-y-4">
+                {/* Week Header */}
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center space-x-2">
                   <svg className="h-5 w-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <span>{date}</span>
+                  <span>{weekData.label}</span>
                 </h2>
 
-                {/* Events for this date */}
+                {/* Events for this week */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {dateEvents.map(event => (
+                  {weekData.events.map(event => (
                     <EventCard
                       key={event.id}
                       event={event}
@@ -306,6 +335,18 @@ export default function Events() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Load More Button */}
+        {filteredEvents.length > displayCount && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => setDisplayCount(prev => prev + 9)}
+              className="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium transition-colors"
+            >
+              Φόρτωση περισσότερων ({filteredEvents.length - displayCount} απομένουν)
+            </button>
           </div>
         )}
       </div>
