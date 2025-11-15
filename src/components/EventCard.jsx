@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { EVENT_TYPES, EVENT_STATUS } from '../services/events'
 import { academyConfig } from '../config/academy'
 
@@ -8,9 +9,11 @@ export default function EventCard({
   onAttendanceClick,
   onAttendanceViewClick,
   onDeleteClick,
+  onEventCardClick,
   showDeleteButton = false,
   compact = false
 }) {
+  const navigate = useNavigate()
   // Get event type color
   const getEventTypeColor = (type) => {
     switch (type) {
@@ -44,9 +47,20 @@ export default function EventCard({
   const team = teams.find(t => t.id === event.teamIds[0])
   const teamName = team?.name || 'Ομάδα'
 
+  const handleCardClick = () => {
+    if (user.role === 'coach' || user.role === 'superadmin') {
+      // Navigate to event detail page
+      navigate(`/events/${event.id}`)
+    } else if (user.role === 'parent') {
+      // Open modal for parent
+      onEventCardClick?.(event)
+    }
+  }
+
   return (
     <div
-      className={`group bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-200 dark:border-gray-700 overflow-hidden ${compact ? '' : ''}`}
+      onClick={handleCardClick}
+      className={`group bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer ${compact ? '' : ''}`}
     >
       <div className={`p-${compact ? '5' : '6'}`}>
         {/* Event Header */}
@@ -76,7 +90,7 @@ export default function EventCard({
           {/* Show delete button only for coaches and superadmins */}
           {showDeleteButton && (user.role === 'coach' || user.role === 'superadmin') && (
             <button
-              onClick={() => onDeleteClick(event)}
+              onClick={(e) => { e.stopPropagation(); onDeleteClick(event) }}
               className="ml-2 p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +144,7 @@ export default function EventCard({
         <div className={`flex justify-end space-x-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-600`}>
           {user.role === 'parent' && (
             <button
-              onClick={() => onAttendanceClick(event)}
+              onClick={(e) => { e.stopPropagation(); onAttendanceClick(event) }}
               className={`px-${compact ? '3' : '4'} py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors ${compact ? 'text-sm' : ''} flex items-center space-x-${compact ? '1' : '2'}`}
             >
               <svg className={`h-${compact ? '3.5' : '4'} w-${compact ? '3.5' : '4'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,7 +155,7 @@ export default function EventCard({
           )}
           {(user.role === 'coach' || user.role === 'superadmin') && (
             <button
-              onClick={() => onAttendanceViewClick(event)}
+              onClick={(e) => { e.stopPropagation(); onAttendanceViewClick(event) }}
               className={`px-${compact ? '3' : '4'} py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors ${compact ? 'text-sm' : ''} flex items-center space-x-${compact ? '1' : '2'}`}
             >
               <svg className={`h-${compact ? '3.5' : '4'} w-${compact ? '3.5' : '4'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -12,6 +12,7 @@ import Teams from './pages/Teams'
 import Players from './pages/Players'
 import GlobalPlayers from './pages/GlobalPlayers'
 import Events from './pages/Events'
+import EventDetail from './pages/EventDetail'
 import OfflinePage from './components/OfflinePage'
 
 function App() {
@@ -98,6 +99,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Events />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/events/:eventId" element={
+            <ProtectedRoute>
+              <Layout>
+                <EventDetail />
               </Layout>
             </ProtectedRoute>
           } />

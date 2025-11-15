@@ -300,7 +300,7 @@ export const EVENT_STATUS = {
 
 // Attendance status translations
 export const ATTENDANCE_STATUS = {
-  present: 'Παρόν',
+  present: 'Παρών',
   absent: 'Απών',
   maybe: 'Ίσως'
 }
@@ -364,4 +364,68 @@ export async function deleteAttendanceDeclaration(eventId, playerId) {
   })
 
   return { playerId }
+}
+
+/**
+ * Get event details with participant information
+ * @param {string} eventId - Event ID
+ * @returns {Promise<Object>} Event object with participant details and attendance info
+ */
+export async function getEventWithParticipants(eventId) {
+  if (!db) throw new Error('Firestore not initialized')
+
+  const eventDoc = doc(db, 'events', eventId)
+  const eventSnapshot = await getDoc(eventDoc)
+
+  if (!eventSnapshot.exists()) {
+    return null
+  }
+
+  const eventData = {
+    id: eventSnapshot.id,
+    ...eventSnapshot.data()
+  }
+
+  // Convert Timestamps to Date objects
+  if (eventData.startDate && typeof eventData.startDate.toDate === 'function') {
+    eventData.startDate = eventData.startDate.toDate()
+  }
+  if (eventData.endDate && typeof eventData.endDate.toDate === 'function') {
+    eventData.endDate = eventData.endDate.toDate()
+  }
+  if (eventData.createdAt && typeof eventData.createdAt.toDate === 'function') {
+    eventData.createdAt = eventData.createdAt.toDate()
+  }
+  if (eventData.updatedAt && typeof eventData.updatedAt.toDate === 'function') {
+    eventData.updatedAt = eventData.updatedAt.toDate()
+  }
+
+  // Fetch participant details if participantIds exist
+  if (eventData.participantIds && eventData.participantIds.length > 0) {
+    const participantsData = []
+
+    for (const playerId of eventData.participantIds) {
+      try {
+        const playerDoc = doc(db, 'players', playerId)
+        const playerSnapshot = await getDoc(playerDoc)
+        if (playerSnapshot.exists()) {
+          const playerData = {
+            id: playerSnapshot.id,
+            ...playerSnapshot.data()
+          }
+          // Add attendance declaration for this player if exists
+          playerData.attendanceStatus = eventData.attendanceDeclarations?.[playerId] || null
+          participantsData.push(playerData)
+        }
+      } catch (error) {
+        console.error(`Error fetching player ${playerId}:`, error)
+      }
+    }
+
+    eventData.participants = participantsData
+  } else {
+    eventData.participants = []
+  }
+
+  return eventData
 }

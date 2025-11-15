@@ -152,6 +152,14 @@ export default function AttendanceModal({ isOpen, onClose, event, userPlayers, o
               Τα Παιδιά μου
             </h3>
 
+            {event?.status !== 'scheduled' && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  ℹ️ Δεν μπορείτε να δηλώσετε παρουσία για αυτό το event γιατί δεν είναι προγραμματισμένο.
+                </p>
+              </div>
+            )}
+
             {userPlayers.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                 Δεν υπάρχουν παιδιά που συμμετέχουν σε αυτό το event
@@ -161,6 +169,7 @@ export default function AttendanceModal({ isOpen, onClose, event, userPlayers, o
                 {userPlayers.map(player => {
                   const declaration = attendanceDeclarations[player.id]
                   const currentStatus = declaration?.status || null
+                  const isScheduled = event?.status === 'scheduled'
 
                   return (
                     <div
@@ -186,36 +195,44 @@ export default function AttendanceModal({ isOpen, onClose, event, userPlayers, o
                       </div>
 
                       {/* Status Buttons */}
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {Object.entries(ATTENDANCE_STATUS).map(([key, label]) => (
-                          <button
-                            key={key}
-                            onClick={() => handleAttendanceChange(player.id, key)}
-                            disabled={isLoading}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              currentStatus === key
-                                ? getStatusColor(key)
-                                : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
-                            } disabled:opacity-50`}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
+                      {isScheduled ? (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {Object.entries(ATTENDANCE_STATUS).map(([key, label]) => (
+                            <button
+                              key={key}
+                              onClick={() => handleAttendanceChange(player.id, key)}
+                              disabled={isLoading}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                currentStatus === key
+                                  ? getStatusColor(key)
+                                  : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
+                              } disabled:opacity-50`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="mb-3 px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 text-sm text-gray-700 dark:text-gray-300">
+                          Δεν διατίθεται δήλωση παρουσίας
+                        </div>
+                      )}
 
                       {/* Notes */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Σημειώσεις (προαιρετικό)
-                        </label>
-                        <textarea
-                          value={declaration?.notes || ''}
-                          onChange={(e) => handleAttendanceChange(player.id, currentStatus, e.target.value)}
-                          placeholder="π.χ. Αρρώστια, ταξίδι κτλ."
-                          rows={2}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-                        />
-                      </div>
+                      {isScheduled && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Σημειώσεις (προαιρετικό)
+                          </label>
+                          <textarea
+                            value={declaration?.notes || ''}
+                            onChange={(e) => handleAttendanceChange(player.id, currentStatus, e.target.value)}
+                            placeholder="π.χ. Αρρώστια, ταξίδι κτλ."
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                          />
+                        </div>
+                      )}
                     </div>
                   )
                 })}

@@ -6,6 +6,7 @@ import useAuth from '../contexts/useAuth'
 import CreateEventModal from '../components/CreateEventModal'
 import AttendanceModal from '../components/AttendanceModal'
 import AttendanceViewModal from '../components/AttendanceViewModal'
+import EventDetailModal from '../components/EventDetailModal'
 import EventCard from '../components/EventCard'
 
 export default function Events() {
@@ -15,6 +16,7 @@ export default function Events() {
   const [players, setPlayers] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEventDetailModal, setShowEventDetailModal] = useState(false)
   const [eventToDelete, setEventToDelete] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showAttendanceModal, setShowAttendanceModal] = useState(false)
@@ -131,6 +133,12 @@ export default function Events() {
   const handleAttendanceViewClick = (event) => {
     setSelectedEvent(event)
     setShowAttendanceViewModal(true)
+  }
+
+  const handleEventCardClick = (event) => {
+    // This is for parent users to open the modal
+    setSelectedEvent(event)
+    setShowEventDetailModal(true)
   }
 
   if (loading || isLoading) {
@@ -289,6 +297,7 @@ export default function Events() {
                       user={user}
                       onAttendanceClick={handleAttendanceClick}
                       onAttendanceViewClick={handleAttendanceViewClick}
+                      onEventCardClick={handleEventCardClick}
                       onDeleteClick={handleDeleteClick}
                       showDeleteButton={true}
                       compact={false}
@@ -376,6 +385,16 @@ export default function Events() {
         isOpen={showAttendanceViewModal}
         onClose={() => {
           setShowAttendanceViewModal(false)
+          setSelectedEvent(null)
+        }}
+        event={selectedEvent}
+      />
+
+      {/* Event Detail Modal for Parents */}
+      <EventDetailModal
+        isOpen={showEventDetailModal}
+        onClose={() => {
+          setShowEventDetailModal(false)
           setSelectedEvent(null)
         }}
         event={selectedEvent}

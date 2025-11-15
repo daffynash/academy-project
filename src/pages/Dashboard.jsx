@@ -8,6 +8,7 @@ import { getUpcomingEvents, EVENT_TYPES } from "../services/events";
 import useAuth from "../contexts/useAuth";
 import AttendanceModal from "../components/AttendanceModal";
 import AttendanceViewModal from "../components/AttendanceViewModal";
+import EventDetailModal from "../components/EventDetailModal";
 import EventCard from "../components/EventCard";
 
 export default function Dashboard() {
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [showAttendanceViewModal, setShowAttendanceViewModal] = useState(false);
+  const [showEventDetailModal, setShowEventDetailModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
@@ -77,6 +79,12 @@ export default function Dashboard() {
   const handleAttendanceViewClick = (event) => {
     setSelectedEvent(event);
     setShowAttendanceViewModal(true);
+  };
+
+  const handleEventCardClick = (event) => {
+    // For parent users to open the modal
+    setSelectedEvent(event);
+    setShowEventDetailModal(true);
   };
 
   if (loading) return <div>Loading...</div>;
@@ -303,6 +311,7 @@ export default function Dashboard() {
                   user={user}
                   onAttendanceClick={handleAttendanceClick}
                   onAttendanceViewClick={handleAttendanceViewClick}
+                  onEventCardClick={handleEventCardClick}
                   showDeleteButton={false}
                   compact={false}
                 />
@@ -333,6 +342,16 @@ export default function Dashboard() {
         isOpen={showAttendanceViewModal}
         onClose={() => {
           setShowAttendanceViewModal(false);
+          setSelectedEvent(null);
+        }}
+        event={selectedEvent}
+      />
+
+      {/* Event Detail Modal for Parents */}
+      <EventDetailModal
+        isOpen={showEventDetailModal}
+        onClose={() => {
+          setShowEventDetailModal(false);
           setSelectedEvent(null);
         }}
         event={selectedEvent}
