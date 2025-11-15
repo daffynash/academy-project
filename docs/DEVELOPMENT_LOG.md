@@ -688,3 +688,175 @@ npx firebase deploy --only hosting
 - **User-Friendly Messages**: Clear, contextual messages in Greek
 
 ---
+
+## 📅 Session: November 15, 2025 - Major UX & UI Improvements
+
+### 🎯 Session Objectives
+Comprehensive improvement of user experience across modal components, events management system, navigation, and mobile responsiveness with production deployment.
+
+### 🔧 1. Modal System Refactoring - React Portal Architecture
+
+**Problem**: Modals were opening at page center (relative to scroll position) instead of viewport center. On mobile, when content was scrolled down, modals would appear low on the visible area.
+
+**Root Cause**: Modal components rendered in page component hierarchy, positioning calculated relative to parent context, not viewport.
+
+**Solution Implemented**: React Portal Architecture
+- Extract modals from DOM tree hierarchy
+- Render at `document.body` level using `createPortal()`
+- Positioning relative to viewport using `fixed inset-0`
+
+**Technical Details**:
+```jsx
+// Modal container with viewport-centered positioning
+<div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+  <div className="flex flex-col overflow-hidden max-h-[80vh] w-full">
+    {/* Scrollable modal content */}
+  </div>
+</div>
+```
+
+**Mobile Optimization Applied**:
+- Height: Changed `max-h-[90vh]` → `max-h-[80vh]` (account for browser UI bars)
+- Width: Changed `w-[90vw]` → `w-full` with `px-4` padding
+- Result: Better accommodation of mobile address bar and tab bar
+
+**Fixed Header/Footer Pattern**:
+- Problem: Header and footer hidden when scrolling modal content
+- Solution: Flexbox layout (`flex flex-col overflow-hidden`)
+  - Header: `flex-shrink-0` (maintains height, doesn't scroll)
+  - Content: `flex-1 overflow-y-auto` (takes remaining space, scrollable)
+  - Footer: `flex-shrink-0` (maintains height, doesn't scroll)
+
+**Files Updated**:
+- `src/components/EventDetailModal.jsx` - Portal + flex layout + attendance button state
+- `src/components/AttendanceModal.jsx` - Portal + flex layout
+- `src/components/AttendanceViewModal.jsx` - Portal + flex layout + stats section
+- `src/components/CreateEventModal.jsx` - Portal + flex layout + form submission fix
+
+### 📅 2. Event Management Features
+
+**2.1 Smart Event Filtering**
+- **Default Behavior**: Show only `scheduled` + `in-progress` events (hide completed/cancelled)
+- **Implementation**: `filterStatus` state defaults to `'active'`
+- **Filter Options**: "Σε εξέλιξη ή Προγραμματισμένα" (default) | "Όλα" | Individual status
+- **Benefit**: Reduces visual clutter, cleaner user experience
+- **Code**: `src/pages/Events.jsx` lines 31, 68-80
+
+**2.2 Weekly Event Grouping**
+- **Changed From**: Daily grouping (one section per day)
+- **Changed To**: Weekly grouping (Monday-Sunday, ISO week format)
+- **Format**: Display as "14 Νοε - 20 Νοε 2025"
+- **Implementation**: 
+  - `getWeekStartDate()` - Calculates Monday of current week
+  - `formatWeekRange()` - Formats week as Greek date range
+  - Events grouped by week start date
+- **Code**: `src/pages/Events.jsx` lines 107-140
+
+**2.3 Pagination System**
+- **Pattern**: Show 9 items initially, "Load More" button adds 9 more
+- **Implementation**: `displayCount` state with slice and increment
+- **Benefit**: Faster initial load, better mobile performance, explicit user choice
+- **Display**: Shows remaining count: "Φόρτωση περισσότερων (15 απομένουν)"
+- **Code**: `src/pages/Events.jsx` lines 111-122, 315-322
+
+**2.4 Attendance Button State Management**
+- **Rule**: Disabled unless event status is `'scheduled'`
+- **Implementation**: `disabled={isSubmitting || event.status !== 'scheduled'}`
+- **Rationale**: Only allow attendance declarations for upcoming events
+- **Code**: `src/components/EventDetailModal.jsx` line 280
+
+### 🎨 3. Navigation & Visual Enhancements
+
+**3.1 Navigation Icons Update**
+- **Dashboard Icon**: Building → Simple house icon (more intuitive "home" association)
+- **Players Icon**: Group → Single person silhouette (clearer individual player representation)
+- **Location**: `src/components/AppHeader.jsx` lines 18-23, 41-46, 53-58
+- **SVG Paths**: Updated to Heroicons-style simple paths
+
+**3.2 Mobile Navigation Optimization**
+- **Desktop**: Full text labels with icons
+- **Mobile**: Icons-only mode (hidden md:flex vs md:hidden)
+- **Layout**: Evenly distributed via `justify-around`
+- **Touch Targets**: Proper `p-2.5` padding (40px minimum touch area)
+- **Accessibility**: `title` tooltips for icon identification
+- **Code**: `src/components/AppHeader.jsx` lines 134-151
+
+**3.3 EventCard Mobile Layout Optimization**
+- **Issue**: Date/time information stacked on mobile (full width each)
+- **Solution**: 2-column grid adapting by breakpoint
+- **Grid Pattern**: 
+  - Mobile: `grid-cols-2` (Date/Time | Participants side-by-side)
+  - Tablet+: `sm:grid-cols-3` (Date/Time | Location | Participants)
+- **Changes**:
+  - Icon spacing: `space-x-2` → `space-x-1.5`
+  - Box padding: `px-3 py-2` → `px-2 py-2`
+  - Location field: `hidden sm:flex` (hidden on mobile)
+- **Code**: `src/components/EventCard.jsx` lines 107-140
+
+**Related Updates**:
+- `src/pages/Players.jsx` - "Προσθήκη Υπάρχοντος" button icon updated
+- `src/pages/GlobalPlayers.jsx` - Header person icon updated
+
+### 🚀 4. Build, Commit & Production Deployment
+
+**Git Commit**:
+```
+Commit: b674d57
+Message: "feat: improve UX and UI across application"
+- Modal viewport centering and mobile optimization
+- Event management features: smart filtering, weekly grouping, pagination
+- Navigation icons and mobile UI refinements
+- Fixed header/footer pattern across modals
+- EventCard responsive layout optimization
+
+Stats: 11 files changed, 191 insertions(+), 112 deletions(-)
+New file: src/hooks/useScrollToTop.js
+```
+
+**Production Build**:
+```
+✓ Vite build successful (2.70s)
+✓ JavaScript: index-CRkn1Kbj.js (878.02 KB minified, 210.41 KB gzipped)
+✓ CSS: index-_zX77mjc.css (56.98 KB minified, 8.64 KB gzipped)
+✓ PWA: Service Worker + Workbox (946.49 KB total)
+✓ Modules: 78 transformed successfully
+✓ No errors or warnings
+```
+
+**Firebase Deployment**:
+```
+Project: academy-app-3bf82
+Status: ✅ LIVE
+URL: https://academy-app-3bf82.web.app
+Files deployed: 31
+Deploy time: Completed successfully
+```
+
+### 📊 Modified Files Summary
+
+**Modal Components** (Portal + Fixed Layout):
+- ✅ `src/components/EventDetailModal.jsx`
+- ✅ `src/components/AttendanceModal.jsx`
+- ✅ `src/components/AttendanceViewModal.jsx`
+- ✅ `src/components/CreateEventModal.jsx`
+
+**Event Management**:
+- ✅ `src/pages/Events.jsx`
+- ✅ `src/components/EventCard.jsx`
+
+**Navigation & UI**:
+- ✅ `src/components/AppHeader.jsx`
+- ✅ `src/pages/Players.jsx`
+- ✅ `src/pages/GlobalPlayers.jsx`
+
+### ✅ Session Completion Status
+- **Modal System**: ✅ Viewport centering + mobile optimization + fixed header/footer
+- **Event Features**: ✅ Smart filtering + weekly grouping + pagination
+- **Event Attendance**: ✅ Button state management
+- **Navigation**: ✅ Icon updates + mobile optimization
+- **Mobile Layout**: ✅ EventCard responsive grid
+- **Production Deployment**: ✅ Build successful + Live on Firebase Hosting
+
+### 🟢 Project Status: READY FOR PRODUCTION
+
+---
